@@ -1,0 +1,4 @@
+/target/
+*.DS_Store
+/.idea/
+/security-manager-spring-boot-starter.iml
