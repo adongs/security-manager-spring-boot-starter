@@ -1,1 +1,1 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.security.manager.auto.SecurityManagerAutoConfig
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.adongs.auto.SecurityManagerAutoConfig
