@@ -1,7 +1,6 @@
 package com.adongs.implement.logout;
 
 import com.adongs.annotation.extend.log.*;
-import com.security.manager.annotation.extend.log.*;
 import com.adongs.constant.LogLevel;
 import com.adongs.implement.BaseAspect;
 import org.apache.commons.logging.Log;
