@@ -1,6 +1,14 @@
 # security-manager-spring-boot-starter
 一个安全框架工具,集成多种功能,适合中小项目,开箱即用
 
+## maven
+```xml
+<dependency>
+  <groupId>com.adongs</groupId>
+  <artifactId>security-manager-spring-boot-starter</artifactId>
+  <version>1.0</version>
+</dependency>
+```
 
 ## 注解介绍
 
