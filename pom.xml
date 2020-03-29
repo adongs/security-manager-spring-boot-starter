@@ -10,7 +10,7 @@
 
     <name>security-manager-spring-boot-starter</name>
     <url>https://github.com/adongs/security-manager-spring-boot-starter</url>
-    <description>一个安全框架工具,继承多种功能,适合中小项目,开箱即用</description>
+    <description>一个安全框架工具,集成多种功能,适合中小项目,开箱即用</description>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
