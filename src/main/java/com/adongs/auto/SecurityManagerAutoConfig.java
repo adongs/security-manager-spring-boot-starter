@@ -2,6 +2,8 @@ package com.adongs.auto;
 
 import com.adongs.implement.core.CertificationAspect;
 import com.adongs.implement.resubmit.DefaultResubmitProcessor;
+import com.adongs.implement.sightseer.SightseerProcessor;
+import com.adongs.implement.sightseer.SightseerRegistrar;
 import com.adongs.implement.sign.DefaultSignProcessor;
 import com.adongs.session.manager.BodyReaderFilter;
 import com.adongs.session.user.TerminalFactory;
@@ -14,6 +16,7 @@ import com.adongs.implement.rateLimiter.DefaultRateLimiterProcessor;
 import com.adongs.session.manager.SessionFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * 自动配置主要类
  */
 @Configuration
-@ComponentScan("com.security.manager")
+@ComponentScan("com.adongs")
 @Import({EncryptionAutoConfig.class, LogOutAutoConfig.class})
 public class SecurityManagerAutoConfig {
 
@@ -71,6 +74,29 @@ public class SecurityManagerAutoConfig {
         return new DefaultDataSource();
     }
 
+
+    /**
+     * 忽略url处理器
+     * @param securityManagerConfig 配置
+     * @param commonPrefix 公共前缀
+     * @return 忽略处理器
+     */
+    @Bean
+    @ConditionalOnProperty(name = "spring.security.manager.request.tourists",havingValue = "false",matchIfMissing = true)
+    public SightseerProcessor sightseerProcessor(SecurityManagerConfig securityManagerConfig, @Value("${server.servlet.context-path:}") String commonPrefix){
+        return new SightseerProcessor(securityManagerConfig,commonPrefix);
+    }
+
+    /**
+     * 游客注解扫描
+     * @return 游客注解扫描器
+     */
+    @Bean
+    @ConditionalOnProperty(name = "spring.security.manager.request.tourists",havingValue = "false",matchIfMissing = true)
+    public SightseerRegistrar sightseerRegistrar(){
+        return new SightseerRegistrar();
+    }
+
     /**
      * 构建终端工厂
      * @param securityManagerConfig 配置类
@@ -79,8 +105,8 @@ public class SecurityManagerAutoConfig {
      */
     @Bean
     @ConditionalOnProperty(name = "spring.security.manager.request.enabled",havingValue = "true",matchIfMissing = true)
-    public TerminalFactory terminalFactory(SecurityManagerConfig securityManagerConfig,DataSource dataSource){
-        return new TerminalFactory(securityManagerConfig,dataSource);
+    public TerminalFactory terminalFactory(SecurityManagerConfig securityManagerConfig,DataSource dataSource,SightseerProcessor sightseerProcessor){
+        return new TerminalFactory(securityManagerConfig,dataSource,sightseerProcessor);
     }
 
     /**

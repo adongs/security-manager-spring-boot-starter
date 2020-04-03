@@ -12,13 +12,18 @@ import java.lang.annotation.*;
 public @interface  ExcelExport {
 
     /**
-     * 导出文件名称
+     * 数据提取位置,支持el表达式
+      * @return
+     */
+  String data();
+    /**
+     * 导出文件名称,支持el表达式
      * @return 导出文件名称
      */
   String name() default "导出数据.xls";
 
     /**
-     * 导出sheet名称
+     * 导出sheet名称,支持el表达式
      * @return 导出sheet名称
      */
   String sheetName() default "sheet0";

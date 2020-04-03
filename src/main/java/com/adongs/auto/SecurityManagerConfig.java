@@ -3,6 +3,8 @@ package com.adongs.auto;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 @Component
 @ConfigurationProperties(prefix = "spring.security.manager")
 public class SecurityManagerConfig {
@@ -136,8 +138,9 @@ public class SecurityManagerConfig {
          */
         private String token = "token";
         /**
-         * 是否开启游客模式
-         * 当token为null时允许访问
+         * 游客模式
+         * 为true时 token为null时允许访问
+         * 为false时 只有用@Sightseer标注的controller才可以访问
          */
         private boolean tourists = false;
         /**
@@ -160,6 +163,10 @@ public class SecurityManagerConfig {
          * 限流数据,每秒访问量
          */
         private Double permitsPerSecond;
+        /**
+         * 忽略验证token的url
+         */
+        private Set<String> ignoreUrl;
         /**
          * 重复提交
          */
@@ -235,6 +242,14 @@ public class SecurityManagerConfig {
 
         public void setResubmit(Resubmit resubmit) {
             this.resubmit = resubmit;
+        }
+
+        public Set<String> getIgnoreUrl() {
+            return ignoreUrl;
+        }
+
+        public void setIgnoreUrl(Set<String> ignoreUrl) {
+            this.ignoreUrl = ignoreUrl;
         }
     }
 

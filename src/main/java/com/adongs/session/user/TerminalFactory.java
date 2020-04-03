@@ -3,6 +3,7 @@ package com.adongs.session.user;
 import com.adongs.auto.SecurityManagerConfig;
 import com.adongs.data.DataSource;
 import com.adongs.exception.TokenException;
+import com.adongs.implement.sightseer.SightseerProcessor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -19,16 +20,20 @@ public class TerminalFactory {
 
     private SecurityManagerConfig config;
     private DataSource dataSource;
+    private SightseerProcessor sightseerProcessor;
 
-    public TerminalFactory(SecurityManagerConfig config, DataSource dataSource) {
+    public TerminalFactory(SecurityManagerConfig config, DataSource dataSource,SightseerProcessor sightseerProcessor) {
         this.config = config;
         this.dataSource = dataSource;
+        this.sightseerProcessor=sightseerProcessor;
     }
 
     public void terminal(HttpServletRequest httpServletRequest) {
+        boolean sightseer = sightseerProcessor.isSightseer(httpServletRequest.getRequestURI());
+        if (sightseer){return;}
         SecurityManagerConfig.Request request = config.getRequest();
         Optional<String> token = Optional.ofNullable(httpServletRequest.getHeader(request.getToken()));
-        if (request.getTourists() && !token.isPresent()){
+        if (!request.getTourists() && !token.isPresent()){
             throw new TokenException("token invalid",null);
         }
         Optional<User> user = dataSource.token(token);
