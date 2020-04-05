@@ -155,6 +155,132 @@ spring.security.manager.des.offset|String|偏移量大于等于8位
 spring.security.manager.log.lineFeed|boolean|是否单行输出日志|true
 
 
+## 文档
+
+### 用户token和权限
+
+> 简单的token校验以及权限控制
+
+- 1.实现 DataSource 接口,自定义权限和用户token验证,DefaultDataSource为默认实现的用例,可以参考
+建议写一个service
+
+- 2.设置spring.security.manager.request.enabled为true,默认为true
+
+- 3.编写一个controller,下面的接口如果没有合格token是无法访问
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    public User user(){
+        return new User();
+    }
+}
+```
+- 4.想对接口设置访问权限或者访问角色,可以使用@Certification注解,如下要求用户必须同时拥有admin和user角色,同时权限必须有select和update
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @Certification(roles = {"admin","user"},permissions = {"select","update"})
+    public User user(){
+        return new User();
+    }
+}
+```
+- 5.如果只想用户角色满足一个即可和权限满足一个就行,可以设置如下Certification.Logical.AND表示并且  Certification.Logical.OR表示或者
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @Certification(roles = {"admin","user"},rlogical = Certification.Logical.OR,permissions = {"select","update"},plogical = Certification.Logical.OR)
+    public User user(){
+        return new User();
+    }
+}
+```
+
+- 6.想要获取当前登录者的信息
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @Certification(roles = {"admin","user"},rlogical = Certification.Logical.OR,permissions = {"select","update"},plogical = Certification.Logical.OR)
+    public User user(){
+           //获取登录者的终端
+            Terminal terminal = Terminal.get();
+            //获取登录信息
+            User user = terminal.getUser();
+        return user;
+    }
+}
+```
+- 7.如果想要获取请求体
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @Certification(roles = {"admin","user"},rlogical = Certification.Logical.OR,permissions = {"select","update"},plogical = Certification.Logical.OR)
+    public User user(){
+            HttpServletRequest request = Terminal.getRequest();
+       return new User();
+    }
+}
+```
+
+- 如果不想这个接口校验token,需要标记为游客允许访问,在user方法上添加@Sightseer注解即可,
+@Sightseer也可以添加在类上面,添加在类上面表示这个Controller下面所有的接口都不校验token,
+优先级:方法@Certification > 方法@Sightseer > 类@Certification > 类@Sightseer
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @Sightseer
+    public User user(){
+        return new User();
+    }
+}
+```
+
+```java
+@Controller
+@RequestMapping("test")
+@Sightseer
+public class TestController {
+
+    //会校验token,和权限
+    @PostMapping("user")
+    @Certification(roles = {"admin","user"},rlogical = Certification.Logical.OR,permissions = {"select","update"},plogical = Certification.Logical.OR)
+    public User user(){
+        return new User();
+    }
+   //不会校验token
+    @PostMapping("user1")
+    public User user(){
+        return new User();
+    }
+
+}
+```
+
+
+### 限流
+
+
+
+
+
 ### 下一版
 
 @Lock

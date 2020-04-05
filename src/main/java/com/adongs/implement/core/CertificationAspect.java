@@ -1,6 +1,7 @@
 package com.adongs.implement.core;
 
 import com.adongs.annotation.core.Certification;
+import com.adongs.annotation.core.Sightseer;
 import com.adongs.implement.BaseAspect;
 import com.adongs.session.user.Terminal;
 import com.google.common.collect.Sets;
@@ -37,6 +38,23 @@ public class CertificationAspect extends BaseAspect {
         Certification.Logical plogical = certification.plogical();
         ruleMatch(plogical,terminal.getPermissions(),certification.permissions());
     }
+
+    @Before(value = "@within(certification)")
+    public void beforeClass(JoinPoint joinPoint, Certification certification){
+        Certification annotation = getAnnotation(joinPoint, Certification.class);
+        Sightseer sightseer = getAnnotation(joinPoint, Sightseer.class);
+        if (annotation==null){
+            if(sightseer!=null){
+                return;
+            }
+            Terminal terminal = Terminal.get();
+            Certification.Logical rlogical = certification.rlogical();
+            ruleMatch(rlogical,terminal.getRoles(),certification.roles());
+            Certification.Logical plogical = certification.plogical();
+            ruleMatch(plogical,terminal.getPermissions(),certification.permissions());
+        }
+    }
+
 
 
     /**

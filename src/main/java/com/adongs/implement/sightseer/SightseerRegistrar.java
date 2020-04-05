@@ -101,7 +101,8 @@ public class SightseerRegistrar  implements ApplicationListener<ContextRefreshed
        for (int i = 0,l=methods.length; i < l; i++) {
            Method method = methods[i];
            Sightseer sightseer = method.getAnnotation(Sightseer.class);
-           if (sightseer!=null){
+           Certification certification = method.getAnnotation(Certification.class);
+           if (sightseer!=null && certification==null){
                RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                if (requestMapping!=null){
                    sightseerUrl.addAll(Sets.newHashSet(requestMapping.value()));
@@ -144,11 +145,13 @@ public class SightseerRegistrar  implements ApplicationListener<ContextRefreshed
      */
     private Set<String> getClassSightseerUrl(Object object){
         Set<String> sightseerUrl = Sets.newHashSet();
+        Certification certificationClass = object.getClass().getAnnotation(Certification.class);
+        boolean isCertificationClassNull = certificationClass==null?true:false;
         Method[] methods = object.getClass().getMethods();
         for (int i = 0,l=methods.length; i < l; i++) {
             Method method = methods[i];
-            Certification sightseer = method.getAnnotation(Certification.class);
-            if (sightseer==null){
+            Certification certification = method.getAnnotation(Certification.class);
+            if (certification==null && isCertificationClassNull){
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                 if (requestMapping!=null){
                     sightseerUrl.addAll(Sets.newHashSet(requestMapping.value()));
