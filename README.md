@@ -6,7 +6,7 @@
 <dependency>
   <groupId>com.adongs</groupId>
   <artifactId>security-manager-spring-boot-starter</artifactId>
-  <version>1.0</version>
+  <version>1.1</version>
 </dependency>
 ```
 
@@ -15,6 +15,7 @@
 |注解|功能描述|
 |---|---|
 @Certification|判断权限和角色
+@Sightseer|游客
 @RateLimiters|限流器
 @Resubmit|防止重复提交
 @Sign|盐值校验
@@ -30,7 +31,11 @@
 @Decode|解密
 @IgnoresField|忽略字段响应
 @IgnoresFields|@IgnoresField集合
-@ExcelExport|表格导出(暂时没写)
+@ResponseExcel|表格导出
+
+## @Sightseer
+> 表示controller不验证用户
+
 
 ## @Certification
 > 权限注解,标注在方法上,执行方法前会进行权限认证
@@ -42,6 +47,7 @@ permissions|String[]|权限组|空
 plogical|Certification.Logical|关系 <br/> Certification.Logical.AND 并且 <br/> Certification.Logical.OR 或|Certification.Logical.AND
 roles|String[]|角色组|空
 rlogical|Certification.Logical|关系 <br/> Certification.Logical.AND 并且 <br/> Certification.Logical.OR 或|Certification.Logical.AND
+
 
 ## @RateLimiters
 > 限流,可以限制请求的访问数量,即每秒请求数量
@@ -112,8 +118,22 @@ type|Class|过滤类型|
 include|String[]|保留字段|默认为空
 filter|String[]|过滤字段|默认为空
 
-@ExcelExport
-> 开发中
+@ResponseExcel
+> 导出excel
+
+|参数名称|类型|说明|默认值
+|---|---|---|---|
+data|String|数据提取位置,支持el表达式|空
+name|String|导出文件名称,支持el表达式|导出数据
+nameDatetime|String|在名称上添加时间戳|yyyy-MM-dd
+nameDatetimePosition|int|时间戳的位置 -1(名称前面)  0(关闭时间戳)  1(名称后面)|1
+sheetName|String|导出sheet名称,支持el表达式|sheet0
+compression|boolean|是否压缩|false
+compressionFormat|CompressionFormat|压缩格式,现在只支持zip,后期扩展|CompressionFormat.ZIP
+
+
+
+
 
 ## 配置介绍
 
@@ -135,4 +155,13 @@ spring.security.manager.des.offset|String|偏移量大于等于8位
 spring.security.manager.log.lineFeed|boolean|是否单行输出日志|true
 
 
+### 下一版
 
+@Lock
+> 本地锁 等待编写
+
+@RedisLock
+> redis共享锁,等待编写
+
+@ZookeeperLock
+> Zookeeper共享锁,等待编写
