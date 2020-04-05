@@ -30,7 +30,11 @@ public class TerminalFactory {
 
     public void terminal(HttpServletRequest httpServletRequest) {
         boolean sightseer = sightseerProcessor.isSightseer(httpServletRequest.getRequestURI());
-        if (sightseer){return;}
+        if (sightseer){
+            Terminal build = build(httpServletRequest);
+            build.set(build);
+            return;
+        }
         SecurityManagerConfig.Request request = config.getRequest();
         Optional<String> token = Optional.ofNullable(httpServletRequest.getHeader(request.getToken()));
         if (!request.getTourists() && !token.isPresent()){
@@ -40,7 +44,7 @@ public class TerminalFactory {
         if (!user.isPresent() && token.isPresent()){
             throw new TokenException("token inexistence",token.isPresent()?token.get():null);
         }
-        Terminal build = build(request, httpServletRequest, user.isPresent()?user.get():null, token.isPresent()?token.get():null);
+        Terminal build = build(httpServletRequest, user.isPresent()?user.get():null, token.isPresent()?token.get():null);
         build.set(build);
     }
 
@@ -57,16 +61,29 @@ public class TerminalFactory {
 
     /**
      * 构建终端信息
-     * @param request 请求配置
      * @param httpServletRequest HttpServletRequest
      * @param user 用户信息
      * @param token 用户token
      * @return 终端
      */
-    private Terminal build(SecurityManagerConfig.Request request, HttpServletRequest httpServletRequest, User user, String token){
+    private Terminal build(HttpServletRequest httpServletRequest, User user, String token){
         String version = httpServletRequest.getHeader(config.getRequest().getVersion());
         String sign = httpServletRequest.getHeader(config.getRequest().getSign());
         String timestamp = httpServletRequest.getHeader(config.getRequest().getTimestamp());
         return new Terminal(user,version,sign,token,timestamp,this.dataSource);
     }
+
+    /**
+     * 构建未认证的终端信息
+     * @param httpServletRequest HttpServletRequest
+     * @return 终端信息
+     */
+    private Terminal build(HttpServletRequest httpServletRequest){
+        String version = httpServletRequest.getHeader(config.getRequest().getVersion());
+        String sign = httpServletRequest.getHeader(config.getRequest().getSign());
+        String timestamp = httpServletRequest.getHeader(config.getRequest().getTimestamp());
+        return new Terminal(version,sign,timestamp);
+    }
+
+
 }

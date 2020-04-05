@@ -2,6 +2,9 @@ package com.adongs.session.user;
 
 
 import com.adongs.data.DataSource;
+import com.google.common.collect.Sets;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,6 +33,17 @@ public class Terminal {
         this.timestamp = timestamp;
         this.dataSource = dataSource;
     }
+
+    protected <T extends User> Terminal(String version, String sign, String timestamp) {
+        this.user = null;
+        this.version = version;
+        this.sign = sign;
+        this.token = null;
+        this.timestamp = timestamp;
+        this.dataSource = null;
+    }
+
+
     private Terminal(){
         this.user = null;
         this.version = null;
@@ -43,7 +57,9 @@ public class Terminal {
      * 退出登录
      */
     public void logout(){
-        dataSource.logout(token);
+        if (!StringUtils.isEmpty(token)){
+            dataSource.logout(token);
+        }
         threadLocal.remove();
     }
 
@@ -59,10 +75,16 @@ public class Terminal {
     }
 
     public Set<String> getRoles(){
-       return dataSource.roles(this.token);
+        if (StringUtils.isEmpty(token)){
+           return Sets.newHashSet();
+        }
+        return dataSource.roles(this.token);
     }
 
     public Set<String> getPermissions(){
+        if (StringUtils.isEmpty(token)){
+            return Sets.newHashSet();
+        }
         return dataSource.permissions(this.token);
     }
 
