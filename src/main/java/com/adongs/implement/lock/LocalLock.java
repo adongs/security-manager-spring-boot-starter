@@ -3,8 +3,6 @@ package com.adongs.implement.lock;
 /**
  * @author yudong
  * @version 1.0
- * @date 2020/4/5 5:27 下午
- * @modified By
  */
 public class LocalLock implements LockProcessor {
 

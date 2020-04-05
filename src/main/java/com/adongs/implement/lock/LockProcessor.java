@@ -3,8 +3,6 @@ package com.adongs.implement.lock;
 /**
  * @author yudong
  * @version 1.0
- * @date 2020/4/5 5:00 下午
- * @modified By
  */
 public interface LockProcessor {
 
