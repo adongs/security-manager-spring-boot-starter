@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Configuration
 @ComponentScan("com.adongs")
-@Import({EncryptionAutoConfig.class, LogOutAutoConfig.class})
+@Import({EncryptionAutoConfig.class, LogOutAutoConfig.class,ExcelWebMvcConfigurer.class})
 public class SecurityManagerAutoConfig {
 
     private final static Log LOGGER = LogFactory.getLog(SecurityManagerAutoConfig.class);
