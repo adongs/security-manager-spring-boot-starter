@@ -6,7 +6,7 @@
 <dependency>
   <groupId>com.adongs</groupId>
   <artifactId>security-manager-spring-boot-starter</artifactId>
-  <version>1.1</version>
+  <version>1.2</version>
 </dependency>
 ```
 
