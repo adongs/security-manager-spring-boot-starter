@@ -277,8 +277,107 @@ public class TestController {
 
 ### 限流
 
+> 控制接口单位时间内的请求次数    
+
+- 示范如下
+
+- 1.配置限流
+
+```properties
+//开启限流
+spring.security.manager.request.readers=true
+//每秒请求次数
+spring.security.manager.request.permitsPerSecond=100
+```
+
+- 2.限流接口例子
+
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    @PostMapping("user")
+    @RateLimiters
+    public User user(){
+        return new User();
+    }
+
+}
+```
+- 3.如果想请求如果被限流了,等待多长时间再次尝试获取
+
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    //请求如果被限流了,等待5秒,再次尝试获取
+    @PostMapping("user")
+    @RateLimiters(permits=5000)
+    public User user(){
+        return new User();
+    }
+
+}
+```
+- 4.自定义限流实现RateLimiterProcessor接口并且加入spring管理,修改@RateLimiters(value=自定义限流类的名称.class)
+
+## 重复提交
+
+> 防止接口被重复提交,不可以用作幂等控制,这个是单位时间内重复请求控制
+
+- 例子如下
+
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+
+    //无法在3秒内重复提交
+    @PostMapping("user")
+    @Resubmit
+    public User user(){
+        return new User();
+    } 
+}
+```
+
+- 1.自定义重复提交判定条件,使用uid即可,uid支持el表达式,如果想要开启用户隔离使用userId即可,同样也支持el表达式
+
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+    
+    @PostMapping("pay")
+    @Resubmit(uid="#order.getOrderId()",userId="#user.getId()")
+    public Order pay(User user,@RequestBody Order order){
+        return new Order();
+    } 
+}
+```
+- 2.想要自定义实现ResubmitProcessor接口,并且交给spring管理,修改processor=自定义的类.class
 
 
+## 盐值校验
+
+> 在请求接口过程中,为了防止接口数据被篡改,可以对参数生成盐值,服务器接收到参数后对盐值进行校验,防止参数被篡改
+
+- 例子
+
+```java
+@Controller
+@RequestMapping("test")
+public class TestController {
+    
+    @PostMapping("pay")
+    @Sign
+    public Order pay(User user,@RequestBody Order order){
+        return new Order();
+    } 
+}
+```
 
 
 ### 下一版
