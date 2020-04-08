@@ -9,6 +9,7 @@ import com.adongs.exception.AuthorityException;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.util.AntPathMatcher;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -23,6 +24,7 @@ import java.util.Set;
 @Aspect
 public class CertificationAspect extends BaseAspect {
 
+    private AntPathMatcher antPathMatcher = new AntPathMatcher(":");
 
     @Before(value = "@annotation(certification)")
     public void before(JoinPoint joinPoint, Certification certification){
@@ -72,10 +74,10 @@ public class CertificationAspect extends BaseAspect {
         }
         Set<String> nowDataSet = Sets.newHashSet(nowData);
         if (logical == Certification.Logical.OR){
-            for (Iterator<String> iterator = rawDataSet.iterator();iterator.hasNext();) {
+            for (Iterator<String> iterator = nowDataSet.iterator();iterator.hasNext();) {
                 String next = iterator.next();
-                boolean contains = nowDataSet.contains(next);
-                if (contains){
+                boolean matchOne = matchOne(next, rawDataSet);
+                if (matchOne){
                     return;
                 }
             }
@@ -84,12 +86,30 @@ public class CertificationAspect extends BaseAspect {
         if (logical == Certification.Logical.AND){
             for (Iterator<String> iterator = nowDataSet.iterator();iterator.hasNext();) {
                 String next = iterator.next();
-                boolean contains = rawDataSet.contains(next);
-                if (!contains){
+                boolean matchOne = matchOne(next, rawDataSet);
+                if (!matchOne) {
                     throw new AuthorityException("permission denied");
                 }
             }
         }
     }
+
+
+    /**
+     * 规则匹配
+     * @param rule 原始规则
+     * @param rules 现有规则集合
+     * @return
+     */
+    private boolean matchOne(String rule,Set<String> rules){
+        for (Iterator<String> iterator = rules.iterator();iterator.hasNext();) {
+            boolean match = antPathMatcher.matchStart(rule, iterator.next());
+            if (match){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }
