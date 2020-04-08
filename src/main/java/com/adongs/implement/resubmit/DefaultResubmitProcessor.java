@@ -61,6 +61,7 @@ public class DefaultResubmitProcessor implements ResubmitProcessor{
         if (StringUtils.isEmpty(uid)){
             ContentCachingRequestWrapper request = Terminal.getRequest(ContentCachingRequestWrapper.class);
             uid=new String(request.getMethod().equals("GET")?readParam(request):readBody(request));
+            uid=uid+request.getRequestURI()+request.getMethod();
             return md5.encode(uid);
         }else{
             ElAnalysis elAnalysis = new ElAnalysis(params);
