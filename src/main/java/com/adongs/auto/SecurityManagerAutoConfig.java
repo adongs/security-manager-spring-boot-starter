@@ -1,6 +1,7 @@
 package com.adongs.auto;
 
 import com.adongs.implement.core.CertificationAspect;
+import com.adongs.implement.lock.RedisLockAspect;
 import com.adongs.implement.resubmit.DefaultResubmitProcessor;
 import com.adongs.implement.sightseer.SightseerProcessor;
 import com.adongs.implement.sightseer.SightseerRegistrar;
@@ -17,6 +18,7 @@ import com.adongs.session.manager.SessionFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -33,7 +35,13 @@ import java.util.concurrent.TimeUnit;
  */
 @Configuration
 @ComponentScan("com.adongs")
-@Import({EncryptionAutoConfig.class, LogOutAutoConfig.class,ExcelWebMvcConfigurer.class})
+@Import({EncryptionAutoConfig.class,
+        LogOutAutoConfig.class,
+        ExcelWebMvcConfigurer.class,
+        JedisLockAutoConfig.class,
+        RedissonLockAutoConfig.class,
+        ZookeeperLockAutoConfig.class})
+@AutoConfigureAfter
 public class SecurityManagerAutoConfig {
 
     private final static Log LOGGER = LogFactory.getLog(SecurityManagerAutoConfig.class);
@@ -101,6 +109,7 @@ public class SecurityManagerAutoConfig {
      * 构建终端工厂
      * @param securityManagerConfig 配置类
      * @param dataSource 数据源
+     * @param sightseerProcessor 路径忽略器
      * @return 终端工厂
      */
     @Bean
@@ -186,4 +195,14 @@ public class SecurityManagerAutoConfig {
         return new VersionAspect();
    }
 
+
+    /**
+     * 开启互斥锁
+     * @return 开启互斥锁
+     */
+    @Bean
+    @ConditionalOnProperty(name = "spring.security.manager.redis.enabled",havingValue = "true",matchIfMissing = true)
+    public RedisLockAspect redisLockAspect(){
+        return new RedisLockAspect();
+    }
 }

@@ -27,6 +27,7 @@ public class ExcelFileProcessor {
      * @param data 数据
      * @param fileName 文件名称
      * @param sheetName sheet名称
+     * @throws IOException io异常
      * @return 内存对象
      */
    public static ByteArrayOutputStream exportMemory(Collection<?> data,String fileName,String sheetName) throws IOException {
@@ -44,6 +45,7 @@ public class ExcelFileProcessor {
      * @param data 数据
      * @param fileName 文件名称
      * @param sheetName sheet名称
+     * @throws IOException io异常
      * @return 文件对象
      */
     public static File exportFile(Collection<?> data,String fileName,String sheetName) throws IOException {

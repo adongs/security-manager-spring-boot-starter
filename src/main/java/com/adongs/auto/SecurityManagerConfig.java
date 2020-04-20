@@ -22,6 +22,15 @@ public class SecurityManagerConfig {
      */
     private Logs log = new Logs();
 
+    /**
+     * 分布式互斥锁 redis实现,效率高
+     */
+    private Lock redis = new Lock();
+    /**
+     * 分布式互斥锁 zookeeper实现,可靠性高
+     */
+    private Lock zookeeper = new Lock();
+
     public Request getRequest() {
         return request;
     }
@@ -44,6 +53,22 @@ public class SecurityManagerConfig {
 
     public void setLog(Logs log) {
         this.log = log;
+    }
+
+    public Lock getRedis() {
+        return redis;
+    }
+
+    public void setRedis(Lock redis) {
+        this.redis = redis;
+    }
+
+    public Lock getZookeeper() {
+        return zookeeper;
+    }
+
+    public void setZookeeper(Lock zookeeper) {
+        this.zookeeper = zookeeper;
     }
 
     public static class Logs{
@@ -253,5 +278,19 @@ public class SecurityManagerConfig {
         }
     }
 
+    public static class Lock{
+        /**
+         * 开启分布式互斥锁
+         */
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
 
 }
