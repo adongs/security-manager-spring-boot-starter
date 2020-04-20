@@ -32,6 +32,8 @@
 @IgnoresField|忽略字段响应
 @IgnoresFields|@IgnoresField集合
 @ResponseExcel|表格导出
+@RedisLock|redis实现分布式互斥锁
+@ZookeeperLock|Zookeeper实现分布式互斥锁
 
 ## @Sightseer
 > 表示controller不验证用户
