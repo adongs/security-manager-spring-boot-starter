@@ -34,7 +34,7 @@
 @ResponseExcel|表格导出
 @RedisLock|redis实现分布式互斥锁
 @ZookeeperLock|Zookeeper实现分布式互斥锁
-
+----
 ## @Sightseer
 > 表示controller不验证用户
 
@@ -133,8 +133,22 @@ sheetName|String|导出sheet名称,支持el表达式|sheet0
 compression|boolean|是否压缩|false
 compressionFormat|CompressionFormat|压缩格式,现在只支持zip,后期扩展|CompressionFormat.ZIP
 
+@RedisLock
+> redis实现的分布式互斥锁,支持集群和单机
 
+|参数名称|类型|说明|默认值
+|---|---|---|---|
+key|String|数据唯一标识,支持el表达式|空
+timeout|long|获取锁的时间,超过这个时间将自动释放,单位毫秒|10000
+processor|LockProcessor|自定义解析器,负责解析和处理锁|JedisLockProcessor
 
+@ZookeeperLock
+> zookeeper 实现的分布式互斥锁,可靠性高
+
+|参数名称|类型|说明|默认值
+|---|---|---|---|
+key|String|数据唯一标识,支持el表达式|空
+processor|LockProcessor|自定义解析器,负责解析和处理锁|JedisLockProcessor
 
 
 ## 配置介绍
@@ -155,7 +169,8 @@ spring.security.manager.request.resubmit.duration|long|过期时间单位毫秒|
 spring.security.manager.des.key|String|des秘钥,必须大于等于16位
 spring.security.manager.des.offset|String|偏移量大于等于8位
 spring.security.manager.log.lineFeed|boolean|是否单行输出日志|true
-
+spring.security.manager.zookeeper.enabled|boolean|是否开启分布式锁,zookeeper实现|true
+spring.security.manager.redis.enabled|boolean|是否开启分布式锁,redis实现|true
 
 ## 文档
 

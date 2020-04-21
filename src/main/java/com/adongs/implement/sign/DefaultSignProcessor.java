@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class DefaultSignProcessor implements SignProcessor {
-    private static final MD5 md5 = MD5.build();
+    private static final MD5 md5 = MD5.singleBuild();
 
 
     @Override

@@ -22,7 +22,7 @@ public abstract class Digest implements Coding{
     private Charset charset;
 
     public Digest(MessageDigest messageDigest, String slat, Charset charset) {
-        LOGGER.info("init messageDigest="+messageDigest.getAlgorithm());
+        LOGGER.debug("init messageDigest="+messageDigest.getAlgorithm());
         this.messageDigest = messageDigest;
         this.slat = slat;
         this.charset = charset;

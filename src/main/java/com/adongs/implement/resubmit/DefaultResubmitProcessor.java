@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultResubmitProcessor implements ResubmitProcessor{
 
-    private static final MD5 md5 = MD5.build();
+    private static final MD5 md5 = MD5.singleBuild();
     private final Cache<String,Long> cache;
 
     public DefaultResubmitProcessor(Cache<String,Long> cache) {

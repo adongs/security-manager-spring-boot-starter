@@ -41,7 +41,7 @@ public class RSA implements Coding{
 
 
     public RSA(String privateKey, String publicKey, String charset) {
-        LOGGER.info("init RSA");
+        LOGGER.debug("init RSA");
         this.privateKey = getPrivateKey(privateKey);
         this.publicKey = getPublicKey(publicKey);
         this.charset = Charset.forName(charset);;

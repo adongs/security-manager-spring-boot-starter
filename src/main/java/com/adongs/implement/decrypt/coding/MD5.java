@@ -13,7 +13,8 @@ import java.security.NoSuchAlgorithmException;
 public class MD5 extends Digest {
 
     private final static String DEFAULT_ALGORITHM = "MD5";
-   private final static Charset DEFAULT_ENCODING= StandardCharsets.UTF_8;
+    private final static Charset DEFAULT_ENCODING= StandardCharsets.UTF_8;
+    private final static MD5 md5 = build();
 
     public MD5(String slat, Charset charset)throws NoSuchAlgorithmException,UnsupportedCharsetException {
         super(MessageDigest.getInstance(DEFAULT_ALGORITHM),slat ==null?null:slat.trim(),charset);
@@ -46,5 +47,10 @@ public class MD5 extends Digest {
            return null;
        }
    }
+
+   public static MD5 singleBuild(){
+        return md5;
+   }
+
 
 }

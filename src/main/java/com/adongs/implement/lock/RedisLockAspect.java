@@ -26,7 +26,7 @@ public class RedisLockAspect extends BaseAspect {
     private ApplicationContext applicationContext;
 
     private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final MD5 md5 = MD5.build();
+    private static final MD5 md5 = MD5.singleBuild();
 
 
     @Around(value = "@annotation(lock)")

@@ -30,7 +30,7 @@ public abstract class Symmetric implements Coding{
     private Charset charset;
 
     public Symmetric(String algorithm, String encryption, String fillStyle, String key, String offse, Charset charset){
-        LOGGER.info("init symmetric coding DEFAULT_CIPHER_ALGORITHM ="+algorithm+"/"+encryption+"/"+fillStyle);
+        LOGGER.debug("init symmetric coding DEFAULT_CIPHER_ALGORITHM ="+algorithm+"/"+encryption+"/"+fillStyle);
         DEFAULT_CIPHER_ALGORITHM=algorithm+"/"+encryption+"/"+fillStyle;
         this.secretKey = getSecretKey(key);
         if (this.secretKey==null){
