@@ -6,7 +6,7 @@
 <dependency>
   <groupId>com.adongs</groupId>
   <artifactId>security-manager-spring-boot-starter</artifactId>
-  <version>1.2</version>
+  <version>1.4</version>
 </dependency>
 ```
 
@@ -414,14 +414,12 @@ public class TestController {
 }
 ```
 
+## 版本
 
-### 下一版
+## 1.0
 
-@Lock
-> 本地锁 等待编写
+## 1.2
 
-@RedisLock
-> redis共享锁,等待编写
+## 1.3
 
-@ZookeeperLock
-> Zookeeper共享锁,等待编写
+## 1.4
