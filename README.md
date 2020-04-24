@@ -32,6 +32,7 @@
 @IgnoresField|忽略字段响应
 @IgnoresFields|@IgnoresField集合
 @ResponseExcel|表格导出
+@RequestExcel|表格导入
 @RedisLock|redis实现分布式互斥锁
 @ZookeeperLock|Zookeeper实现分布式互斥锁
 ----
@@ -127,11 +128,28 @@ filter|String[]|过滤字段|默认为空
 |---|---|---|---|
 data|String|数据提取位置,支持el表达式|空
 name|String|导出文件名称,支持el表达式|导出数据
+title|string|表格名称
+excelType|ExcelType|导出版本
+style|IExcelExportStyler|导出风格自定义
+dataHandler|IExcelDataHandler|导出数据转换器
+i18nHandler|IExcelI18nHandler|国际化
 nameDatetime|String|在名称上添加时间戳|yyyy-MM-dd
 nameDatetimePosition|int|时间戳的位置 -1(名称前面)  0(关闭时间戳)  1(名称后面)|1
 sheetName|String|导出sheet名称,支持el表达式|sheet0
 compression|boolean|是否压缩|false
-compressionFormat|CompressionFormat|压缩格式,现在只支持zip,后期扩展|CompressionFormat.ZIP
+compressionFormat|String|压缩格式,现在只支持zip,|默认实现的zip
+
+
+@RequestExcel
+> 导入excel
+
+|参数名称|类型|说明|默认值
+|---|---|---|---|
+name|string|上传文件参数名称
+check|boolean|是否开启校验
+group|Class<?> []|校验组
+savePath|string|保存文件路径
+processor|ExcelProcessor|文件保存处理器|默认实现DefaultFileProcessor.class
 
 @RedisLock
 > redis实现的分布式互斥锁,支持集群和单机
