@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ComponentScan("com.adongs")
 @Import({EncryptionAutoConfig.class,
+        ExcelAutoConfig.class,
         LogOutAutoConfig.class,
         ExcelWebMvcConfigurer.class,
         JedisLockAutoConfig.class,

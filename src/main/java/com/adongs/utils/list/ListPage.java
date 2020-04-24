@@ -1,4 +1,4 @@
-package com.adongs.implement.excel;
+package com.adongs.utils.list;
 
 
 import java.util.Collection;
@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
  * @author yudong
  * @version 1.0
  */
-public class CollectionPagination {
+public class ListPage {
 
     /**
      * 总页数
@@ -34,14 +34,14 @@ public class CollectionPagination {
 
     private Collection<?> pageData = null;
 
-    public CollectionPagination(Collection<?> pageResult, int pageSize) {
+    public ListPage(Collection<?> pageResult, int pageSize) {
         this.pageSize = pageSize;
         this.pageData = pageResult;
         init(pageResult, pageSize);
     }
 
 
-    public CollectionPagination(Collection<?> pageResult) {
+    public ListPage(Collection<?> pageResult) {
         this(pageResult, DEFAULT_PAGE_SIZE);
     }
 
