@@ -6,7 +6,7 @@
 
     <groupId>com.adongs</groupId>
     <artifactId>security-manager-spring-boot-starter</artifactId>
-    <version>1.3</version>
+    <version>1.4</version>
 
     <name>security-manager-spring-boot-starter</name>
     <url>https://github.com/adongs/security-manager-spring-boot-starter</url>
