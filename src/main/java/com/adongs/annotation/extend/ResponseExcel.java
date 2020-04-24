@@ -15,7 +15,7 @@ import java.lang.annotation.*;
 /**
  * 将数据导出为excel
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD,ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ResponseExcel {
