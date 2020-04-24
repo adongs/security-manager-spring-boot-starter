@@ -38,11 +38,15 @@ public class RequestExcelArgumentResolver implements HandlerMethodArgumentResolv
      */
     @Override
     public boolean supportsParameter(MethodParameter methodParameter) {
+        boolean hasParameterAnnotation = methodParameter.hasParameterAnnotation(RequestExcel.class);
+        if (!hasParameterAnnotation){
+            return false;
+        }
         Class<?> nestedParameterType = methodParameter.getNestedParameterType();
         boolean isList = List.class.isAssignableFrom(nestedParameterType);
         ParameterizedType parameterizedType = (ParameterizedType)methodParameter.getGenericParameterType();
         boolean isGeneric= parameterizedType.getActualTypeArguments().length == 1;
-        return isList&&isGeneric&&methodParameter.hasParameterAnnotation(RequestExcel.class);
+        return isList&&isGeneric;
     }
 
     @Override

@@ -73,12 +73,16 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler {
      */
     @Override
     public boolean supportsReturnType(MethodParameter methodParameter) {
+        boolean hasMethodAnnotation = methodParameter.hasMethodAnnotation(ResponseExcel.class);
+        if (!hasMethodAnnotation){
+            return false;
+        }
         Class<?> returnType = methodParameter.getMethod().getReturnType();
         boolean expectationType =Collection.class.isAssignableFrom(returnType);
         if (!expectationType){
             expectationType = ResponseEntity.class.isAssignableFrom(returnType);
         }
-        return expectationType && methodParameter.getMethodAnnotation(ResponseExcel.class)!=null;
+        return expectationType;
     }
 
 
