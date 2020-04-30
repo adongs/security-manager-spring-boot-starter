@@ -1,5 +1,6 @@
 package com.adongs.auto;
 
+import com.adongs.implement.core.resources.JwtAlgorithm;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -197,6 +198,8 @@ public class SecurityManagerConfig {
          */
         private Resubmit resubmit = new Resubmit();
 
+        private Jwt resources = new Jwt();
+
         public String getToken() {
             return token;
         }
@@ -275,6 +278,93 @@ public class SecurityManagerConfig {
 
         public void setIgnoreUrl(Set<String> ignoreUrl) {
             this.ignoreUrl = ignoreUrl;
+        }
+
+        public Jwt getResources() {
+            return resources;
+        }
+
+        public void setResources(Jwt resources) {
+            this.resources = resources;
+        }
+    }
+
+    public static class Jwt{
+
+
+        /**
+         * 资源鉴权令牌获取,在header中获取,如果header中获取不到将在param中获取
+         */
+        private String resources = "resources";
+
+        /**
+         * 是否开启资源鉴权
+         */
+        private boolean enabled = false;
+        /**
+         * 秘钥
+         */
+        private String key;
+
+        /**
+         * 公钥
+         */
+        private String publicKey;
+        /**
+         * 私钥
+         */
+        private String privateKey;
+        /**
+         * 加密方式
+         */
+        private JwtAlgorithm mode;
+
+        public String getResources() {
+            return resources;
+        }
+
+        public void setResources(String resources) {
+            this.resources = resources;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public String getPublicKey() {
+            return publicKey;
+        }
+
+        public void setPublicKey(String publicKey) {
+            this.publicKey = publicKey;
+        }
+
+        public String getPrivateKey() {
+            return privateKey;
+        }
+
+        public void setPrivateKey(String privateKey) {
+            this.privateKey = privateKey;
+        }
+
+        public JwtAlgorithm getMode() {
+            return mode;
+        }
+
+        public void setMode(JwtAlgorithm mode) {
+            this.mode = mode;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
     }
 

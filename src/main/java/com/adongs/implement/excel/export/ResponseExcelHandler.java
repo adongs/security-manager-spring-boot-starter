@@ -2,7 +2,7 @@ package com.adongs.implement.excel.export;
 
 import cn.afterturn.easypoi.excel.entity.ExportParams;
 import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
-import com.adongs.annotation.extend.ResponseExcel;
+import com.adongs.annotation.extend.excel.ResponseExcel;
 import com.adongs.implement.excel.export.compression.Compression;
 import com.adongs.implement.excel.export.compression.CompressionManager;
 import com.adongs.session.user.Terminal;

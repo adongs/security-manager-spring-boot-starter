@@ -1,6 +1,8 @@
 package com.adongs.auto;
 
-import com.adongs.implement.core.CertificationAspect;
+import com.adongs.implement.core.*;
+import com.adongs.implement.core.resources.DefaultResourcesJwtProcessor;
+import com.adongs.implement.core.resources.ResourcesJwtProcessor;
 import com.adongs.implement.lock.RedisLockAspect;
 import com.adongs.implement.resubmit.DefaultResubmitProcessor;
 import com.adongs.implement.sightseer.SightseerProcessor;
@@ -10,9 +12,6 @@ import com.adongs.session.manager.BodyReaderFilter;
 import com.adongs.session.user.TerminalFactory;
 import com.adongs.data.DataSource;
 import com.adongs.data.DefaultDataSource;
-import com.adongs.implement.core.RateLimiterAspect;
-import com.adongs.implement.core.SignAspect;
-import com.adongs.implement.core.VersionAspect;
 import com.adongs.implement.rateLimiter.DefaultRateLimiterProcessor;
 import com.adongs.session.manager.SessionFilter;
 import org.apache.commons.logging.Log;
@@ -202,8 +201,34 @@ public class SecurityManagerAutoConfig {
      * @return 开启互斥锁
      */
     @Bean
-    @ConditionalOnProperty(name = "spring.security.manager.redis.enabled",havingValue = "true",matchIfMissing = true)
+    @ConditionalOnProperty(name = "spring.security.manager.redis.enabled",havingValue = "true")
     public RedisLockAspect redisLockAspect(){
         return new RedisLockAspect();
     }
+
+    /**
+     * jwt处理器
+     * @param securityManagerConfig 配置
+     * @return jwt处理器
+     */
+    @Bean
+    @ConditionalOnMissingBean(ResourcesJwtProcessor.class)
+    @ConditionalOnProperty(name = "spring.security.manager.request.resources.enabled",havingValue = "true")
+    public ResourcesJwtProcessor resourcesJwtProcessor(SecurityManagerConfig securityManagerConfig){
+        return new DefaultResourcesJwtProcessor(securityManagerConfig.getRequest().getResources());
+    }
+
+    /**
+     * 开启资源验证注解
+     * @param securityManagerConfig 配置
+     * @param resourcesJwtProcessor jwt处理器
+     * @return 资源验证注解
+     */
+    @Bean
+    @ConditionalOnProperty(name = "spring.security.manager.request.resources.enabled",havingValue = "true")
+    public ResourcesAspect resourcesAspect(SecurityManagerConfig securityManagerConfig,ResourcesJwtProcessor resourcesJwtProcessor){
+        return new ResourcesAspect(securityManagerConfig.getRequest().getResources().getResources(),resourcesJwtProcessor);
+    }
 }
+
+

@@ -1,6 +1,8 @@
 package com.adongs.annotation.core;
 
 
+import com.adongs.constant.Logical;
+
 import java.lang.annotation.*;
 
 /**
@@ -12,7 +14,7 @@ import java.lang.annotation.*;
 @Target({ ElementType.METHOD,ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Certification {
+public @interface Authentication {
 
     /**
      * 权限组
@@ -39,21 +41,6 @@ public @interface Certification {
   Logical rlogical() default Logical.AND;
 
 
-  /**
-   * 条件关系
-   * @author yudong
-   * @version 1.0
-   */
-  public static enum Logical {
-    /**
-     * 并且
-     */
-    AND,
-    /**
-     * 或
-     */
-    OR
-  }
 
 
 }

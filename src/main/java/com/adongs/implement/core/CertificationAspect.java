@@ -1,7 +1,8 @@
 package com.adongs.implement.core;
 
-import com.adongs.annotation.core.Certification;
+import com.adongs.annotation.core.Authentication;
 import com.adongs.annotation.core.Sightseer;
+import com.adongs.constant.Logical;
 import com.adongs.implement.BaseAspect;
 import com.adongs.session.user.Terminal;
 import com.google.common.collect.Sets;
@@ -26,8 +27,8 @@ public class CertificationAspect extends BaseAspect {
 
     private AntPathMatcher antPathMatcher = new AntPathMatcher(":");
 
-    @Before(value = "@annotation(certification)")
-    public void before(JoinPoint joinPoint, Certification certification){
+    @Before(value = "@annotation(authentication)")
+    public void before(JoinPoint joinPoint, Authentication authentication){
         Terminal terminal = Terminal.get();
         if (terminal==null){
             throw new AuthorityException("permission denied");
@@ -35,25 +36,25 @@ public class CertificationAspect extends BaseAspect {
         if (terminal.getUser()==null){
             throw new AuthorityException("permission denied");
         }
-        Certification.Logical rlogical = certification.rlogical();
-        ruleMatch(rlogical,terminal.getRoles(),certification.roles());
-        Certification.Logical plogical = certification.plogical();
-        ruleMatch(plogical,terminal.getPermissions(),certification.permissions());
+        Logical rlogical = authentication.rlogical();
+        ruleMatch(rlogical,terminal.getRoles(), authentication.roles());
+        Logical plogical = authentication.plogical();
+        ruleMatch(plogical,terminal.getPermissions(), authentication.permissions());
     }
 
-    @Before(value = "@within(certification)")
-    public void beforeClass(JoinPoint joinPoint, Certification certification){
-        Certification annotation = getAnnotation(joinPoint, Certification.class);
+    @Before(value = "@within(authentication)")
+    public void beforeClass(JoinPoint joinPoint, Authentication authentication){
+        Authentication annotation = getAnnotation(joinPoint, Authentication.class);
         Sightseer sightseer = getAnnotation(joinPoint, Sightseer.class);
         if (annotation==null){
             if(sightseer!=null){
                 return;
             }
             Terminal terminal = Terminal.get();
-            Certification.Logical rlogical = certification.rlogical();
-            ruleMatch(rlogical,terminal.getRoles(),certification.roles());
-            Certification.Logical plogical = certification.plogical();
-            ruleMatch(plogical,terminal.getPermissions(),certification.permissions());
+            Logical rlogical = authentication.rlogical();
+            ruleMatch(rlogical,terminal.getRoles(), authentication.roles());
+            Logical plogical = authentication.plogical();
+            ruleMatch(plogical,terminal.getPermissions(), authentication.permissions());
         }
     }
 
@@ -65,7 +66,7 @@ public class CertificationAspect extends BaseAspect {
      * @param rawDataSet 用户规则
      * @param nowData 访问需要的规则
      */
-    private void ruleMatch(Certification.Logical logical,Set<String> rawDataSet,String[] nowData){
+    private void ruleMatch(Logical logical, Set<String> rawDataSet, String[] nowData){
         if (nowData==null || nowData.length==0){
             return;
         }
@@ -73,7 +74,7 @@ public class CertificationAspect extends BaseAspect {
             throw new AuthorityException("permission denied");
         }
         Set<String> nowDataSet = Sets.newHashSet(nowData);
-        if (logical == Certification.Logical.OR){
+        if (logical == Logical.OR){
             for (Iterator<String> iterator = nowDataSet.iterator();iterator.hasNext();) {
                 String next = iterator.next();
                 boolean matchOne = matchOne(next, rawDataSet);
@@ -83,7 +84,7 @@ public class CertificationAspect extends BaseAspect {
             }
             throw new AuthorityException("permission denied");
         }
-        if (logical == Certification.Logical.AND){
+        if (logical == Logical.AND){
             for (Iterator<String> iterator = nowDataSet.iterator();iterator.hasNext();) {
                 String next = iterator.next();
                 boolean matchOne = matchOne(next, rawDataSet);

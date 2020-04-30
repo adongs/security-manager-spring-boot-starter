@@ -1,7 +1,7 @@
 package com.adongs.implement.decrypt;
 
 
-import com.adongs.annotation.extend.Decode;
+import com.adongs.annotation.extend.encryption.Decode;
 import com.adongs.exception.DecodeException;
 import com.adongs.implement.BaseAspect;
 import com.adongs.utils.el.ElAnalysis;

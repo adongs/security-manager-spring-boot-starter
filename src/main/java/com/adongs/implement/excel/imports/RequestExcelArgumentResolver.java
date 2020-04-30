@@ -3,7 +3,7 @@ package com.adongs.implement.excel.imports;
 import cn.afterturn.easypoi.excel.ExcelImportUtil;
 import cn.afterturn.easypoi.excel.entity.ImportParams;
 import cn.afterturn.easypoi.excel.entity.result.ExcelImportResult;
-import com.adongs.annotation.extend.RequestExcel;
+import com.adongs.annotation.extend.excel.RequestExcel;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.MethodParameter;

@@ -1,7 +1,7 @@
 package com.adongs.implement.decrypt;
 
 
-import com.adongs.annotation.extend.Decrypt;
+import com.adongs.annotation.extend.encryption.Decrypt;
 import com.google.common.collect.Maps;
 import com.adongs.exception.DecryptException;
 import com.adongs.implement.BaseAspect;

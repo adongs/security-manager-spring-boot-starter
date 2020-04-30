@@ -1,6 +1,6 @@
 package com.adongs.implement.sightseer;
 
-import com.adongs.annotation.core.Certification;
+import com.adongs.annotation.core.Authentication;
 import com.adongs.annotation.core.Sightseer;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
@@ -101,8 +101,8 @@ public class SightseerRegistrar  implements ApplicationListener<ContextRefreshed
        for (int i = 0,l=methods.length; i < l; i++) {
            Method method = methods[i];
            Sightseer sightseer = method.getAnnotation(Sightseer.class);
-           Certification certification = method.getAnnotation(Certification.class);
-           if (sightseer!=null && certification==null){
+           Authentication authentication = method.getAnnotation(Authentication.class);
+           if (sightseer!=null && authentication ==null){
                RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                if (requestMapping!=null){
                    sightseerUrl.addAll(Sets.newHashSet(requestMapping.value()));
@@ -145,13 +145,13 @@ public class SightseerRegistrar  implements ApplicationListener<ContextRefreshed
      */
     private Set<String> getClassSightseerUrl(Object object){
         Set<String> sightseerUrl = Sets.newHashSet();
-        Certification certificationClass = object.getClass().getAnnotation(Certification.class);
-        boolean isCertificationClassNull = certificationClass==null?true:false;
+        Authentication authenticationClass = object.getClass().getAnnotation(Authentication.class);
+        boolean isCertificationClassNull = authenticationClass ==null?true:false;
         Method[] methods = object.getClass().getMethods();
         for (int i = 0,l=methods.length; i < l; i++) {
             Method method = methods[i];
-            Certification certification = method.getAnnotation(Certification.class);
-            if (certification==null && isCertificationClassNull){
+            Authentication authentication = method.getAnnotation(Authentication.class);
+            if (authentication ==null && isCertificationClassNull){
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                 if (requestMapping!=null){
                     sightseerUrl.addAll(Sets.newHashSet(requestMapping.value()));

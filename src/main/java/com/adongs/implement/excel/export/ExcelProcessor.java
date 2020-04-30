@@ -6,7 +6,7 @@ import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
 import cn.afterturn.easypoi.excel.export.styler.IExcelExportStyler;
 import cn.afterturn.easypoi.handler.inter.IExcelDataHandler;
 import cn.afterturn.easypoi.handler.inter.IExcelI18nHandler;
-import com.adongs.annotation.extend.ResponseExcel;
+import com.adongs.annotation.extend.excel.ResponseExcel;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.context.ApplicationContext;
 
