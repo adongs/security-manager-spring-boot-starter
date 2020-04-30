@@ -16,6 +16,7 @@
 |---|---|
 @Certification|判断权限和角色
 @Sightseer|游客
+@Resources|对资源授权
 @RateLimiters|限流器
 @Resubmit|防止重复提交
 @Sign|盐值校验
@@ -35,6 +36,10 @@
 @RequestExcel|表格导入
 @RedisLock|redis实现分布式互斥锁
 @ZookeeperLock|Zookeeper实现分布式互斥锁
+@EitherOr|二选一验证注解
+@Group|对组进行验证注解
+@LeastNotNullQuantity|至少满足多少参数不为空验证注解
+@Mobile|手机号验证注解
 ----
 ## @Sightseer
 > 表示controller不验证用户
@@ -423,3 +428,7 @@ public class TestController {
 ## 1.3
 
 ## 1.4
+
+## 1.5
+1. 实现对资源授权
+2. 添加部分验证注解
