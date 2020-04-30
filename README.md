@@ -1,3 +1,5 @@
+[TOC]
+
 # security-manager-spring-boot-starter
 一个安全框架工具,集成多种功能,全局注解风格,适合中小项目,开箱即用
 
