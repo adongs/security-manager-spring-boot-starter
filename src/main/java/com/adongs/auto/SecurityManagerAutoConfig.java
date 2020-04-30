@@ -22,10 +22,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import java.util.concurrent.TimeUnit;
 
@@ -49,13 +51,15 @@ public class SecurityManagerAutoConfig {
     /**
      * 开启权限
      * @param terminalFactory 终端工厂
+     * @param dispatcherServlet servlet
+     * @param context 上下文
      * @return 权限过滤器
      */
     @Bean
     @ConditionalOnProperty(name = "spring.security.manager.request.enabled",havingValue = "true",matchIfMissing = true)
-    public FilterRegistrationBean sessionFilter(TerminalFactory terminalFactory){
+    public FilterRegistrationBean sessionFilter(TerminalFactory terminalFactory, DispatcherServlet dispatcherServlet, ApplicationContext context){
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
-        SessionFilter sessionFilter = new SessionFilter(terminalFactory);
+        SessionFilter sessionFilter = new SessionFilter(terminalFactory,dispatcherServlet,context);
         filterRegistrationBean.setFilter(sessionFilter);
         filterRegistrationBean.addUrlPatterns("/*");
         return filterRegistrationBean;

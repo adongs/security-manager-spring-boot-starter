@@ -3,17 +3,32 @@ package com.adongs.session.manager;
 import com.adongs.session.user.TerminalFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.web.servlet.*;
+
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class SessionFilter implements Filter {
 
     private final static Log LOGGER = LogFactory.getLog(SessionFilter.class);
 
     private TerminalFactory sessionManagerFactory;
+    private DispatcherServlet dispatcherServlet;
+    private ApplicationContext context;
 
-    public SessionFilter(TerminalFactory sessionManagerFactory) {
+    public SessionFilter(TerminalFactory sessionManagerFactory,DispatcherServlet dispatcherServlet,ApplicationContext context) {
         this.sessionManagerFactory = sessionManagerFactory;
+        this.dispatcherServlet=dispatcherServlet;
+        this.context=context;
     }
 
     /**
@@ -71,8 +86,42 @@ public class SessionFilter implements Filter {
      * @param chain FilterChain
      */
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        sessionManagerFactory.terminal(request);
+        try {
+            sessionManagerFactory.terminal(request);
+        }catch (Exception e){
+            try {
+                throwsException((HttpServletRequest)request,(HttpServletResponse)response,e);
+                return;
+            } catch (Exception exception) {
+               LOGGER.error(exception.getMessage(),exception);
+            }
+        }
         chain.doFilter(request,response);
+    }
+
+    /**
+     * 抛出异常到spring mvc全局处理
+     * @param request 请求对象
+     * @param response 响应对象
+     * @param exception 异常
+     * @throws Exception 异常
+     */
+    private void throwsException(HttpServletRequest request, HttpServletResponse response, Exception exception)throws Exception{
+        for(Iterator<HandlerMapping> iterator = dispatcherServlet.getHandlerMappings().iterator();iterator.hasNext();){
+            HandlerMapping handlerMapping = iterator.next();
+            HandlerExecutionChain handlerExecutionChain = handlerMapping.getHandler(request);
+            if (handlerExecutionChain!=null){
+                Object handler = null;//handlerExecutionChain.getHandler();
+                Map<String, HandlerExceptionResolver> matchingBeans = BeanFactoryUtils
+                        .beansOfTypeIncludingAncestors(context, HandlerExceptionResolver.class, true, false);
+                for(Iterator<HandlerExceptionResolver> resolver = matchingBeans.values().iterator();resolver.hasNext();){
+                    ModelAndView modelAndView = resolver.next().resolveException(request, response, handler, exception);
+                    if (modelAndView!=null){
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     /**
