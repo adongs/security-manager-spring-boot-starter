@@ -90,11 +90,15 @@ public class SessionFilter implements Filter {
             sessionManagerFactory.terminal(request);
         }catch (Exception e){
             try {
-                throwsException((HttpServletRequest)request,(HttpServletResponse)response,e);
-                return;
+                boolean handle = throwsException((HttpServletRequest) request, (HttpServletResponse) response, e);
+                if (handle) {
+                    return;
+                }
             } catch (Exception exception) {
                LOGGER.error(exception.getMessage(),exception);
+               return;
             }
+            throw e;
         }
         chain.doFilter(request,response);
     }
@@ -105,23 +109,25 @@ public class SessionFilter implements Filter {
      * @param response 响应对象
      * @param exception 异常
      * @throws Exception 异常
+     * @return  true 处理成功  false未找到处理的方法
      */
-    private void throwsException(HttpServletRequest request, HttpServletResponse response, Exception exception)throws Exception{
+    private boolean throwsException(HttpServletRequest request, HttpServletResponse response, Exception exception)throws Exception{
         for(Iterator<HandlerMapping> iterator = dispatcherServlet.getHandlerMappings().iterator();iterator.hasNext();){
             HandlerMapping handlerMapping = iterator.next();
             HandlerExecutionChain handlerExecutionChain = handlerMapping.getHandler(request);
             if (handlerExecutionChain!=null){
-                Object handler = null;//handlerExecutionChain.getHandler();
+                Object handler = handlerExecutionChain.getHandler();
                 Map<String, HandlerExceptionResolver> matchingBeans = BeanFactoryUtils
                         .beansOfTypeIncludingAncestors(context, HandlerExceptionResolver.class, true, false);
                 for(Iterator<HandlerExceptionResolver> resolver = matchingBeans.values().iterator();resolver.hasNext();){
                     ModelAndView modelAndView = resolver.next().resolveException(request, response, handler, exception);
                     if (modelAndView!=null){
-                        return;
+                        return true;
                     }
                 }
             }
         }
+        return false;
     }
 
     /**
