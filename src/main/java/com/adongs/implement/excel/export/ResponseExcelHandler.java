@@ -5,12 +5,17 @@ import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
 import com.adongs.annotation.extend.excel.ResponseExcel;
 import com.adongs.implement.excel.export.compression.Compression;
 import com.adongs.implement.excel.export.compression.CompressionManager;
+import com.adongs.implement.field.DisparkResponseBody;
 import com.adongs.session.user.Terminal;
 import com.adongs.utils.el.ElAnalysis;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationContext;
@@ -29,6 +34,8 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,6 +47,8 @@ import java.util.*;
  * @version 1.0
  */
 public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResponseExcelHandler.class);
 
     /**
      * 文件扩展后缀
@@ -79,18 +88,51 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
      */
     @Override
     public boolean supportsReturnType(MethodParameter methodParameter) {
-        boolean hasMethodAnnotation = methodParameter.hasMethodAnnotation(ResponseExcel.class);
-        if (!hasMethodAnnotation){
+        ResponseExcel responseExcel = methodParameter.getMethodAnnotation(ResponseExcel.class);
+        if (responseExcel==null){
+            return false;
+        }
+        boolean isVoid = methodParameter.getParameterType().getName().equals(Void.TYPE.getName());
+        if (isVoid){
             return false;
         }
         Class<?> returnType = methodParameter.getMethod().getReturnType();
         boolean expectationType =Collection.class.isAssignableFrom(returnType);
         if (!expectationType){
-            expectationType = ResponseEntity.class.isAssignableFrom(returnType);
+            boolean isResponseEntity = ResponseEntity.class.isAssignableFrom(returnType);
+            Object returnValue = getReturnValue(methodParameter);
+            if (returnValue==null){
+                return false;
+            }
+            Map<String,Object> elParam = new HashMap<String,Object>(1){{
+                put("return",isResponseEntity?((ResponseEntity)returnValue).getBody():returnValue);
+            }};
+            ElAnalysis elAnalysis = new ElAnalysis(elParam);
+            returnType = elAnalysis.type(responseExcel.data());
+            expectationType = Collection.class.isAssignableFrom(returnType);
         }
         return expectationType;
     }
 
+    /**
+     * 获取返回值对象
+     * @param methodParameter 方法
+     * @return 返回值
+     */
+    private Object getReturnValue(MethodParameter methodParameter){
+        try {
+            Field returnValue = methodParameter.getClass().getDeclaredField("returnValue");
+            if (returnValue!=null){
+                returnValue.setAccessible(true);
+               return returnValue.get(methodParameter);
+            }
+        } catch (NoSuchFieldException e) {
+            LOGGER.error(e.getMessage(),e);
+        } catch (IllegalAccessException e) {
+            LOGGER.error(e.getMessage(),e);
+        }
+         return null;
+    }
 
     @Override
     public void handleReturnValue(@NonNull Object o, MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest) throws Exception {
@@ -107,7 +149,7 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
         String title = getTitle(responseExcel, elAnalysis);
         ExportParams exportParams = EXCEL_PROCESSOR.exportParams(title, sheelName, responseExcel);
         if (o instanceof ResponseEntity){
-            autoAssembly((ResponseEntity)o,fileSuffix,fileName,response);
+            autoAssembly((ResponseEntity)o,responseExcel,fileSuffix,fileName,response);
         }else{
             autoAssembly(responseExcel,fileSuffix,fileName,response);
         }
@@ -146,11 +188,20 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
      * @param nativeResponse 响应体
      * @throws UnsupportedEncodingException 编码异常
      */
-    private void autoAssembly(ResponseEntity responseEntity,String fileFormat,String fileName,HttpServletResponse nativeResponse)throws UnsupportedEncodingException{
+    private void autoAssembly(ResponseEntity responseEntity,ResponseExcel responseExcel,String fileFormat,String fileName,HttpServletResponse nativeResponse)throws UnsupportedEncodingException{
         HttpHeaders headers = responseEntity.getHeaders();
         headers.forEach((k,v)->{
             nativeResponse.setHeader(k,String.join(",",v));
         });
+        String[] headersStr = responseExcel.headers();
+        if (headersStr.length>0){
+            for (int i = 0,l=headersStr.length; i < l; i++) {
+                String[] split = headersStr[i].split(":");
+                if (split.length==2) {
+                    nativeResponse.setHeader(split[0],split[1]);
+                }
+            }
+        }
         nativeResponse.setStatus(responseEntity.getStatusCodeValue());
         fileHeaderAuto(fileFormat,fileName,nativeResponse);
     }
@@ -211,7 +262,7 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
                 return (Collection)o;
             }
         }else{
-           return elAnalysis.analysis(responseExcel.name(), Collection.class);
+           return elAnalysis.analysis(responseExcel.data(), Collection.class);
         }
          throw new NullPointerException("Can't get data");
     }

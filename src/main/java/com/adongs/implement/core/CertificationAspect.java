@@ -84,15 +84,7 @@ public class CertificationAspect extends BaseAspect {
             }
             throw new AuthorityException("permission denied");
         }
-        if (logical == Logical.AND){
-            for (Iterator<String> iterator = nowDataSet.iterator();iterator.hasNext();) {
-                String next = iterator.next();
-                boolean matchOne = matchOne(next, rawDataSet);
-                if (!matchOne) {
-                    throw new AuthorityException("permission denied");
-                }
-            }
-        }
+
     }
 
 
