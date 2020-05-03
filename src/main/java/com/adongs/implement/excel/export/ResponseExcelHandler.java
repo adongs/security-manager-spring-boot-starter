@@ -8,9 +8,14 @@ import com.adongs.implement.excel.export.compression.CompressionManager;
 import com.adongs.session.user.Terminal;
 import com.adongs.utils.el.ElAnalysis;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -33,7 +39,7 @@ import java.util.*;
  * @author yudong
  * @version 1.0
  */
-public class ResponseExcelHandler implements HandlerMethodReturnValueHandler {
+public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
 
     /**
      * 文件扩展后缀
@@ -300,7 +306,4 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler {
         }
         return sheelName;
     }
-
-
-
 }
