@@ -97,21 +97,30 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
             return false;
         }
         Class<?> returnType = methodParameter.getMethod().getReturnType();
-        boolean expectationType =Collection.class.isAssignableFrom(returnType);
-        if (!expectationType){
+        if (StringUtils.isEmpty(responseExcel.data())){
+            boolean isResponseEntity = ResponseEntity.class.isAssignableFrom(returnType);
+            if (isResponseEntity){
+                Object returnValue = getReturnValue(methodParameter);
+                if (returnValue==null){return false;}
+                Object body = ((ResponseEntity) returnValue).getBody();
+                if (body==null){ return false; }
+                returnType = body.getClass();
+            }
+            boolean isCollection = Collection.class.isAssignableFrom(returnType);
+            return isCollection;
+        }else {
             boolean isResponseEntity = ResponseEntity.class.isAssignableFrom(returnType);
             Object returnValue = getReturnValue(methodParameter);
-            if (returnValue==null){
+            if (returnValue == null) {
                 return false;
             }
-            Map<String,Object> elParam = new HashMap<String,Object>(1){{
-                put("return",isResponseEntity?((ResponseEntity)returnValue).getBody():returnValue);
+            Map<String, Object> elParam = new HashMap<String, Object>(1) {{
+                put("return", isResponseEntity ? ((ResponseEntity) returnValue).getBody() : returnValue);
             }};
             ElAnalysis elAnalysis = new ElAnalysis(elParam);
             returnType = elAnalysis.type(responseExcel.data());
-            expectationType = Collection.class.isAssignableFrom(returnType);
+            return Collection.class.isAssignableFrom(returnType);
         }
-        return expectationType;
     }
 
     /**
