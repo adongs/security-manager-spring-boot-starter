@@ -38,7 +38,7 @@ public @interface Resubmit {
      * false 关闭
      * @return 用户隔离
      */
-    String userId() default "";
+    String userId() default "false";
 
     /**
      * 处理类

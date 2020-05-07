@@ -149,13 +149,23 @@ public class SecurityManagerAutoConfig {
    }
 
     /**
+     * 开启限流注解
+     * @return 开启限流
+     */
+    @Bean
+    @ConditionalOnExpression("#{environment.getProperty('spring.security.manager.request.permits-per-second')!=null}")
+    public RateLimiterAspect rateLimiterAspect(){
+        return new RateLimiterAspect();
+    }
+
+    /**
      * 开启重复提交限制
      * @return 开启重复提交限制
      */
     @Bean
     @ConditionalOnProperty(name = "spring.security.manager.request.resubmit.enabled",havingValue = "true",matchIfMissing = true)
-    public RateLimiterAspect rateLimiterAspect(){
-        return new RateLimiterAspect();
+    public ResubmitAspect resubmitAspect(){
+        return new ResubmitAspect();
     }
     /**
      * 开启重复提交限制默认处理器

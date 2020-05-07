@@ -70,6 +70,8 @@ public class DefaultLogOutFormat implements LogFormat {
         StringBuffer stringBuffer = new StringBuffer();
         if (!StringUtils.isEmpty(logOutInfo.getLabel())){
             stringBuffer.append(logOutInfo.getLabel()).append(INTERVAL);
+        }else{
+            stringBuffer.append(logOutInfo.getMethod().getName()).append(INTERVAL);
         }
         logOutInfo.getParamAndValue().forEach((k,v)->{
             stringBuffer.append(k).append("=").append(objectToJSON(v)).append(INTERVAL);
