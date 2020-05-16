@@ -25,8 +25,8 @@ public @interface Sign {
 
 
     /**
-     * 处理类
+     * 处理类 不填写在默认使用配置文件的处理
      * @return 处理类
      */
-    Class<? extends SignProcessor> value() default DefaultSignProcessor.class;
+    String processor() default "";
 }

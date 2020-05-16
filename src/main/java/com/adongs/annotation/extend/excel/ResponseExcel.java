@@ -15,7 +15,7 @@ import java.lang.annotation.*;
 /**
  * 将数据导出为excel
  */
-@Target({ElementType.METHOD,ElementType.TYPE})
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ResponseExcel {
@@ -45,6 +45,12 @@ public @interface ResponseExcel {
   String name() default "导出数据";
 
   /**
+   * 导出多个sheet
+   * @return
+   */
+  Sheet [] sheet() default {};
+
+  /**
    * 表格名称支持el表达式
    * @return 表格名称支持el表达式
    */
@@ -55,6 +61,24 @@ public @interface ResponseExcel {
    * @return 导出sheet名称
    */
   String sheetName() default "sheet0";
+
+  /**
+   * 设置导出风格
+   * @return 设置导出风格
+   */
+  Class<? extends IExcelExportStyler> style() default ExcelExportStylerDefaultImpl.class;
+
+  /**
+   * 数据转换器
+   * @return 数据转换器
+   */
+  Class<? extends IExcelDataHandler> dataHandler() default ExcelDataHandlerDefaultImpl.class;
+
+  /**
+   * 国际化
+   * @return 国际化
+   */
+  Class<? extends IExcelI18nHandler> i18nHandler() default DefaultIExcelI18nHandler.class;
 
   /**
    * 导出版本
@@ -75,24 +99,6 @@ public @interface ResponseExcel {
    * @return 时间戳位置
    */
   int nameDatetimePosition() default 1;
-
-  /**
-   * 设置导出风格
-   * @return 设置导出风格
-   */
-  Class<? extends IExcelExportStyler> style() default ExcelExportStylerDefaultImpl.class;
-
-  /**
-   * 数据转换器
-   * @return 数据转换器
-   */
-  Class<? extends IExcelDataHandler> dataHandler() default ExcelDataHandlerDefaultImpl.class;
-
-  /**
-   * 国际化
-   * @return 国际化
-   */
-  Class<? extends IExcelI18nHandler> i18nHandler() default DefaultIExcelI18nHandler.class;
 
   /**
    * 是否压缩

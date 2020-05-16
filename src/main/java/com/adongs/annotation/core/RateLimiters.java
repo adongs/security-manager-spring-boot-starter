@@ -18,21 +18,17 @@ public @interface RateLimiters {
 
     /**
      * 限流器名称
-     * 默认global(全局)限流器
+     * 默认使用配置文件限流
      * @return 限流器名称
      */
-   String name() default "global";
+   String processor() default "";
 
     /**
      * 获取令牌等待时间单位毫秒
+     * -1表示从配置中获取
      * @return 获取令牌等待时间单位毫秒
      */
-   int permits() default 0;
+   int permits() default -1;
 
 
-    /**
-     * 处理类
-     * @return 处理类
-     */
-    Class<? extends RateLimiterProcessor> value() default DefaultRateLimiterProcessor.class;
 }

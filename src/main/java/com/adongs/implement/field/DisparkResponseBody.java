@@ -1,7 +1,7 @@
 package com.adongs.implement.field;
 
-import com.adongs.annotation.extend.IgnoresField;
-import com.adongs.annotation.extend.IgnoresFields;
+import com.adongs.annotation.extend.ignores.IgnoresField;
+import com.adongs.annotation.extend.ignores.IgnoresFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.MethodParameter;

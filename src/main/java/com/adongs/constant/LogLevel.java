@@ -5,7 +5,7 @@ import org.apache.commons.logging.Log;
  * @author adong
  * @version 1.0
  */
-public enum LogLevel implements Out {
+public enum LogLevel{
 
 
     FATAL(){
@@ -66,16 +66,11 @@ public enum LogLevel implements Out {
             return log.isTraceEnabled();
         }
     };
+     public abstract  void out(Log log,String outlog);
 
-
-
+    public abstract boolean isOut(Log log);
 
 
 
 }
 
-interface Out{
-    public void out(Log log,String outlog);
-
-    public boolean isOut(Log log);
-}

@@ -1,7 +1,5 @@
 package com.adongs.annotation.extend.encryption;
 
-import com.adongs.implement.decrypt.DecryptProcessor;
-import com.adongs.implement.decrypt.DefaultDESDecryptProcessor;
 
 import java.lang.annotation.*;
 
@@ -11,21 +9,20 @@ import java.lang.annotation.*;
  * @version 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.FIELD,ElementType.PARAMETER})
 @Documented
 public @interface Decrypt {
 
     /**
-     * 加密字段名称,如果是自定义的model需要指定字段,支持EL
-     * @return 加密字段名称
+     * 加密方式
+     * @return 解密字段名称
      */
-    String [] values() default "";
+    String value() default "";
 
     /**
-     * 自定义处理器
-     * @return 自定义处理器
+     * 处理器名称
+     * @return 处理器名称
      */
-    Class<? extends DecryptProcessor> processor() default DefaultDESDecryptProcessor.class;
-
+    String processor() default "";
 
 }

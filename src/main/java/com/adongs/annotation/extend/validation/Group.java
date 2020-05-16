@@ -23,6 +23,11 @@ public @interface Group {
     String [] values();
 
     /**
+     * 枚举类支付
+     * @return
+     */
+    Class<? extends Enum> group() default Enum.class;
+    /**
      * 是否为空
      * @return 是否为空
      */

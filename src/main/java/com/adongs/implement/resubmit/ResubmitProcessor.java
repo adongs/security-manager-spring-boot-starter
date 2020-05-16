@@ -1,12 +1,15 @@
 package com.adongs.implement.resubmit;
 
+import com.adongs.implement.BaseProcessor;
+
 import java.util.Map;
 
 /**
  * @author yudong
  * @version 1.0
  */
-public interface ResubmitProcessor {
+public interface ResubmitProcessor extends BaseProcessor {
+
 
     /**
      * 获取用户id

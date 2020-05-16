@@ -1,6 +1,8 @@
 package com.adongs.annotation.core;
 
 import com.adongs.constant.Logical;
+import com.adongs.implement.core.resources.ResourcesProcessor;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.lang.annotation.*;
 
@@ -26,4 +28,10 @@ public @interface Resources {
      * @return 权限关系
      */
     Logical plogical() default Logical.AND;
+
+    /**
+     * 处理器
+     * @return 处理器
+     */
+    String processor() default "";
 }

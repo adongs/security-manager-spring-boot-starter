@@ -1,15 +1,20 @@
 package com.adongs.implement.core;
 
 import com.adongs.annotation.core.Resources;
+import com.adongs.config.ResourceCertificationConfig;
 import com.adongs.constant.Logical;
 import com.adongs.exception.ResourcesException;
+import com.adongs.implement.AbstractContextAspect;
 import com.adongs.implement.BaseAspect;
-import com.adongs.implement.core.resources.ResourcesJwtProcessor;
-import com.adongs.session.user.Terminal;
+import com.adongs.implement.core.resources.ResourcesProcessor;
+import com.adongs.session.terminal.Terminal;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.AntPathMatcher;
 
@@ -21,17 +26,15 @@ import java.util.*;
  */
 @Aspect
 @Order(2)
-public class ResourcesAspect extends BaseAspect {
+public class ResourcesAspect extends AbstractContextAspect<ResourcesProcessor>{
 
     private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher(":");
 
-    private final ResourcesJwtProcessor RESOURCES_JWTPROCESSOR;
+    @Autowired
+    private ResourceCertificationConfig config;
 
-    private final String RESOURCES;
-
-    public ResourcesAspect(String resources,ResourcesJwtProcessor resourcesJwtProcessor) {
-        this.RESOURCES = resources;
-        this.RESOURCES_JWTPROCESSOR=resourcesJwtProcessor;
+    public ResourcesAspect(ApplicationContext applicationContext) {
+        super(applicationContext, ResourcesProcessor.class);
     }
 
     /**
@@ -41,38 +44,60 @@ public class ResourcesAspect extends BaseAspect {
      */
     @Before(value = "@annotation(resources)")
     public void before(JoinPoint joinPoint, Resources resources){
-        HttpServletRequest request = Terminal.getRequest();
-        String value = request.getHeader(RESOURCES)==null?request.getParameter(RESOURCES):request.getHeader(RESOURCES);
-        Optional<String> valueOptional = Optional.ofNullable(value);
-        if (!valueOptional.isPresent()){
+        final Optional<String> token = token();
+        if (!token.isPresent()){
             throw new ResourcesException("No resources found in header");
         }
-        RESOURCES_JWTPROCESSOR.verification(valueOptional.get());
-        Set<String> permissions = RESOURCES_JWTPROCESSOR.getPermissions(valueOptional.get());
-        Set<String> rules = Sets.newHashSet(resources.permissions());
-        if (rules.isEmpty()){
-            return;
+        final ResourcesProcessor processor = processor(resources.processor(),config.getDefaultProcessor());
+        processor.verification(token.get());
+        authority(resources,processor.permissions(token.get()));
+    }
+
+
+    /**
+     * 权限认证
+     * @param resources 资源注解
+     * @param tokenRoles 用户权限
+     */
+   private void authority(Resources resources,Set<String> tokenRoles){
+       final Set<String> permissions = Sets.newHashSet(resources.permissions());
+       final Logical plogical = resources.plogical();
+       if (permissions.isEmpty()){
+           return;
+       }
+       if (plogical == Logical.OR){
+           for (Iterator<String> iterator =permissions.iterator();iterator.hasNext();){
+               String next = iterator.next();
+               boolean matchOne = matchOne(next, tokenRoles);
+               if (matchOne){
+                   return;
+               }
+           }
+           throw new ResourcesException("No resource permissions");
+       }
+       if (plogical == Logical.AND){
+           for (Iterator<String> iterator =permissions.iterator();iterator.hasNext();) {
+               String next = iterator.next();
+               boolean matchOne = matchOne(next, tokenRoles);
+               if (!matchOne) {
+                   throw new ResourcesException("No resource permissions");
+               }
+           }
+       }
+   }
+
+    /**
+     * 获取令牌
+     * @return
+     */
+    private Optional<String> token(){
+        final String resources = config.getResources();
+        HttpServletRequest request = Terminal.getRequest();
+        final String parameter = request.getParameter(resources);
+        if (parameter!=null){
+            return Optional.ofNullable(parameter);
         }
-        Logical logical = resources.plogical();
-        if (logical == Logical.OR){
-            for (Iterator<String> iterator =permissions.iterator();iterator.hasNext();){
-                String next = iterator.next();
-                boolean matchOne = matchOne(next, rules);
-                if (matchOne){
-                    return;
-                }
-            }
-            throw new ResourcesException("No resource permissions");
-        }
-        if (logical == Logical.AND){
-            for (Iterator<String> iterator =permissions.iterator();iterator.hasNext();) {
-                String next = iterator.next();
-                boolean matchOne = matchOne(next, rules);
-                if (!matchOne) {
-                    throw new ResourcesException("No resource permissions");
-                }
-            }
-        }
+        return Optional.ofNullable(request.getHeader(resources));
     }
 
     /**

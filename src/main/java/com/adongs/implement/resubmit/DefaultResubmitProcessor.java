@@ -1,68 +1,105 @@
 package com.adongs.implement.resubmit;
 
-import com.adongs.session.user.Terminal;
+import com.adongs.annotation.core.Resubmit;
+import com.adongs.config.ResubmitConfig;
+import com.adongs.session.terminal.Terminal;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Maps;
 import com.adongs.implement.decrypt.coding.MD5;
-import com.adongs.session.user.User;
 import com.adongs.utils.el.ElAnalysis;
+import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.StreamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 默认防止重复
  * @author yudong
  * @version 1.0
  */
-public class DefaultResubmitProcessor implements ResubmitProcessor{
+public class DefaultResubmitProcessor implements ResubmitProcessor, ApplicationListener<ApplicationStartedEvent> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultResubmitProcessor.class);
 
     private static final MD5 md5 = MD5.singleBuild();
-    private final Cache<String,Long> cache;
+    private final static String OFF= "off";
+    @Autowired
+    private ResubmitConfig config;
+    @Autowired
+    private ObjectMapper mapper;
 
-    public DefaultResubmitProcessor(Cache<String,Long> cache) {
-        this.cache=cache;
-    }
+    private Cache<String,Long> cache;
 
-    public DefaultResubmitProcessor(int init,long duration, TimeUnit unit) {
+    @Override
+    public void onApplicationEvent(ApplicationStartedEvent event) {
+        final ConfigurableApplicationContext context = event.getApplicationContext();
+        Set<Long> longTime = Sets.newHashSet();
+        Map<String, Object> controller = context.getBeansWithAnnotation(Controller.class);
+        Map<String, Object> restController = context.getBeansWithAnnotation(RestController.class);
+        controller.putAll(restController);
+        final Collection<Object> values = controller.values();
+        for (Object value : values) {
+            final Method[] methods = value.getClass().getMethods();
+            for (Method method : methods) {
+                final Resubmit annotation = method.getAnnotation(Resubmit.class);
+                if (annotation==null){continue;}
+                longTime.add(annotation.time());
+            }
+        }
+        longTime.add(config.getTime());
+        final Long maxTime = longTime.stream().max(Long::compare).get();
         this.cache=CacheBuilder.newBuilder()
-                .initialCapacity(init)
-                .expireAfterAccess(duration, unit).build();;
+                .initialCapacity(Integer.MAX_VALUE)
+                .expireAfterAccess(maxTime*2, TimeUnit.MILLISECONDS).build();
     }
 
-    public DefaultResubmitProcessor() {
-        this(2048,5,TimeUnit.SECONDS);
+
+    @Override
+    public String name() {
+        return "default";
     }
 
     @Override
     public String userId(String el, Map<String, Object> params) {
+        if (el.equals(OFF)){
+            return "";
+        }
         if (StringUtils.isEmpty(el)){
             Terminal terminal = Terminal.get();
-            if (terminal!=null){
-                User user = terminal.getUser();
-                return user.getId().toString();
-            }
+            return terminal.token().getToken();
         }else {
             ElAnalysis elAnalysis = new ElAnalysis(params);
             String analysis = elAnalysis.analysis(el, String.class);
             return analysis;
         }
-        return null;
     }
 
     @Override
     public String key(String uid, Map<String, Object> params) {
         if (StringUtils.isEmpty(uid)){
-            ContentCachingRequestWrapper request = Terminal.getRequest(ContentCachingRequestWrapper.class);
-            uid=new String(request.getMethod().equals("GET")?readParam(request):readBody(request));
-            uid=uid+request.getRequestURI()+request.getMethod();
-            return md5.encode(uid);
+            final HttpServletRequest request = Terminal.getRequest();
+            if (request instanceof ContentCachingRequestWrapper){
+                ContentCachingRequestWrapper wrapper = (ContentCachingRequestWrapper)request;
+                return read(wrapper);
+            }else{
+                return read(params);
+            }
         }else{
             ElAnalysis elAnalysis = new ElAnalysis(params);
             String analysis = elAnalysis.analysis(uid, String.class);
@@ -70,9 +107,10 @@ public class DefaultResubmitProcessor implements ResubmitProcessor{
         }
     }
 
+
     @Override
     public void saveKey(String key, long time) {
-        cache.put(key,time);
+        cache.put(key,System.currentTimeMillis()+time);
     }
 
     @Override
@@ -82,7 +120,6 @@ public class DefaultResubmitProcessor implements ResubmitProcessor{
             return false;
         }
         if (ifPresent<System.currentTimeMillis()){
-            cache.invalidate(key);
             return false;
         }else{
             return true;
@@ -91,50 +128,42 @@ public class DefaultResubmitProcessor implements ResubmitProcessor{
 
     @Override
     public void update(String key, long time) {
-        saveKey(key,time);
+        saveKey(key,System.currentTimeMillis()+time);
     }
 
 
     /**
-     * 读取param数据
-     * @param request HttpServletRequest
-     * @return 返回获取的到的数据
+     * 获取请求数据摘要
+     * @param request 请求
+     * @return 数据摘要
      */
-    private byte[] readParam(HttpServletRequest request){
-        Map<String, String[]> parameterMap = request.getParameterMap();
-        if (parameterMap.isEmpty()){
-            return null;
-        }
-        StringBuilder requesParams = new StringBuilder();
-        TreeMap<String, String[]> params = Maps.newTreeMap();
-        params.putAll(parameterMap);
+    private String read(ContentCachingRequestWrapper request){
+        final Map<String, String[]> parameterMap = request.getParameterMap();
+        StringBuilder parameterStr = new StringBuilder();
+        parameterMap.forEach((k,v)->parameterStr.append(k).append("=").append(StringUtils.join(v)));
+        final byte[] contentAsByteArray = request.getContentAsByteArray();
+        parameterStr.append(new String(contentAsByteArray));
+        return md5.decode(contentAsByteArray.toString());
+    }
+
+    /**
+     * 获取参数摘要
+     * @param params 参数
+     * @return 数据摘要
+     */
+    private String read(Map<String, Object> params){
+        StringBuilder parameterStr = new StringBuilder();
         params.forEach((k,v)->{
-            requesParams.append(k).append("=");
-            for (String s : v) {
-                requesParams.append(s);
+            parameterStr.append(k).append("=");
+            try {
+                mapper.writeValueAsString(v);
+            }catch (JsonProcessingException e){
+                LOGGER.error("数据解析失败 key={}  value=",k,v.getClass().getName(),e);
             }
         });
-        return requesParams.toString().getBytes();
+        return md5.decode(parameterStr.toString());
     }
 
 
-    /**
-     * 读取body请求数据
-     * @param request ContentCachingRequestWrapper
-     * @return 获取到的数据
-     */
-    private byte[] readBody(ContentCachingRequestWrapper request) {
-        byte[] s = null;
-        long contentLengthLong = request.getContentLengthLong();
-        if (contentLengthLong==0){
-            return null;
-        }
-        try {
-            s = StreamUtils.copyToByteArray(request.getInputStream());
-        } catch (IOException e) {}
-        if (s==null || s.length==0){
-            s = request.getContentAsByteArray();
-        }
-        return s;
-    }
+
 }

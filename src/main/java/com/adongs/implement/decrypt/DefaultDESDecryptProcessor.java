@@ -19,23 +19,27 @@ public class DefaultDESDecryptProcessor implements  DecryptProcessor{
 
     /**
      * 加密
-     *
+     * @param type 加密
      * @param plaintext 明文
      * @return 密文
      */
     @Override
-    public String encryption(String plaintext) {
+    public String encryption(String type, String plaintext) {
         return coding.encode(plaintext);
     }
 
     /**
      * 解密
-     *
+     * @param type 解密类型
      * @param ciphertext 密文
      * @return 明文
      */
     @Override
-    public String decode(String ciphertext) {
+    public String decode(String type, String ciphertext) {
         return coding.decode(ciphertext);
+    }
+    @Override
+    public String name() {
+        return "default";
     }
 }
