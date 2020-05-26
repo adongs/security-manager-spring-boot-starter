@@ -1,7 +1,5 @@
 package com.adongs.auto;
 
-import com.adongs.implement.captcha.CaptchaEndpointHandlerMapping;
-import com.adongs.implement.captcha.CaptchaHandler;
 import com.adongs.implement.lock.RedisLockAspect;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.web.cors.CorsConfiguration;
 
 
 /**
@@ -25,7 +22,8 @@ import org.springframework.web.cors.CorsConfiguration;
         ExcelWebMvcConfigurer.class,
         JedisLockAutoConfig.class,
         RedissonLockAutoConfig.class,
-        ZookeeperLockAutoConfig.class})
+        ZookeeperLockAutoConfig.class,
+        CaptchaAutoConfig.class})
 @AutoConfigureAfter
 public class SecurityManagerAutoConfig {
 
@@ -41,10 +39,6 @@ public class SecurityManagerAutoConfig {
         return new RedisLockAspect();
     }
 
-    @Bean
-    public CaptchaEndpointHandlerMapping captchaEndpointHandlerMapping(){
-        return new CaptchaEndpointHandlerMapping(new CorsConfiguration(),new CaptchaHandler());
-    }
 
 }
 

@@ -1,8 +1,6 @@
 package com.adongs.annotation.extend.excel;
 
 
-import com.adongs.implement.excel.imports.ExcelProcessor;
-import com.adongs.implement.excel.imports.defaults.DefaultFileProcessor;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.*;
@@ -28,6 +26,11 @@ public @interface RequestExcel {
     String name() default "";
 
     /**
+     * 读取sheet名称
+     * @return sheet名称
+     */
+    String sheet() default "";
+    /**
      * 是否开启校验
      * @return 是否开启校验
      */
@@ -47,5 +50,5 @@ public @interface RequestExcel {
      * 自定义文件处理器
      * @return 自定义文件处理器
      */
-    Class<? extends ExcelProcessor> processor() default DefaultFileProcessor.class;
+    String processor() default "";
 }

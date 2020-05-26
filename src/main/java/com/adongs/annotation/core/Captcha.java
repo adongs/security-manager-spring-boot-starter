@@ -14,10 +14,16 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Captcha {
+
+    /**
+     * 请求验证码的id
+     * @return 请求验证码的id
+     */
+    String requestId() default "";
     /**
      * 图片验证码请求路径
      * 为空则使用配置文件的路径
-     * @return
+     * @return 图片验证码请求路径
      */
     String value() default "";
 
@@ -25,7 +31,10 @@ public @interface Captcha {
      * 验证码的位置,支持EL表达式,
      * 默认将获取header中的captcha如果不存在将获取Param中的captcha
      * 如果不填写将 默认尝试 (code captcha loginCode loginCaptcha userCode userCaptcha)
-     * @return
+     * EL表达式: #object.code(#参数名称.属性)
+     * 自动解析:例如(code 或者 captcha) ,只要给出字段名称即可,但是需要注意字段名称在参数或者参数对象中不能存在重复,
+     * 否则会导致取值错误
+     * @return 验证码位置
      */
     String code() default "";
 
@@ -37,19 +46,23 @@ public @interface Captcha {
      *      userMobile loginMobile  userPhone  loginPhone
      *      id uid userid loginId
      * )
+     * EL表达式: #object.code(#参数名称.属性)
+     * 自动解析:例如(code 或者 captcha) ,只要给出字段名称即可,但是需要注意字段名称在参数或者参数对象中不能存在重复,
+     * 否则会导致取值错误
+     * @return 登录用户名,支持El表达式
      */
     String loginName() default "";
 
     /**
      * 验证码  宽X高
      * 不填写将使用配置文件
-     * @return
+     * @return 验证码宽X高
      */
     String widthHeight() default "";
 
     /**
      * 验证码位数,不填写默认使用配置文件
-     * @return
+     * @return 验证码位数
      */
     String digits() default "";
 
@@ -62,36 +75,36 @@ public @interface Captcha {
      * 4 纯大写字母
      * 5 纯小写字母
      * 6 数字和大写字母
-     * @return
+     * @return 字符类型
      */
     int characterType() default -1;
 
     /**
      * 验证码字体
-     * @return
+     * @return 验证码字体
      */
     int font() default -1;
     /**
      * 验证码类型
-     * @return
+     * @return 验证类型
      */
     CodeType codeType() default CodeType.CONFIG;
 
     /**
      * 判定失败的条件
-     * @return
+     * @return 判断条件
      */
-    FailureCondition[] condition() default {FailureCondition.CONFIG};
+    FailureCondition[] condition() default {};
 
     /**
      * 条件判定表达式
-     * @return
+     * @return 表达式
      */
     String expression() default "";
 
     /**
-     * 自定义失败判定处理器
-     * @return
+     * 异常判定为失败
+     * @return 处理器
      */
-    String processor() default "";
+    Class<?extends Throwable> [] abnormalJudgment() default {};
 }

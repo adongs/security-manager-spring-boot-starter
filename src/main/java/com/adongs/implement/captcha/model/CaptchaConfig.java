@@ -1,4 +1,4 @@
-package com.adongs.implement.captcha;
+package com.adongs.implement.captcha.model;
 
 import com.adongs.constant.CodeType;
 
@@ -8,6 +8,10 @@ import com.adongs.constant.CodeType;
  * @version 1.0
  */
 public class CaptchaConfig {
+    /**
+     * 请求图片验证码的id
+     */
+    private String requestId;
     private int width;
     private int height;
     private int digits;
@@ -61,5 +65,13 @@ public class CaptchaConfig {
 
     public void setFont(int font) {
         this.font = font;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 }

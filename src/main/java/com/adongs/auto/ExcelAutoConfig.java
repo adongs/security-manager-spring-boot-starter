@@ -8,11 +8,4 @@ import org.springframework.context.annotation.Bean;
  * @version 1.0
  */
 public class ExcelAutoConfig {
-
-    @Bean
-    public ExcelDataHandlerDefaultImpl excelDataHandlerDefault(){
-        return new ExcelDataHandlerDefaultImpl(){
-
-        };
-    }
 }

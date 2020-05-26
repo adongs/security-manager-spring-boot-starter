@@ -3,11 +3,15 @@ package com.adongs.implement.excel.export;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
 import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
 import com.adongs.annotation.extend.excel.ResponseExcel;
+import com.adongs.annotation.extend.excel.Sheet;
+import com.adongs.config.ExcelConfig;
 import com.adongs.implement.excel.export.compression.Compression;
 import com.adongs.implement.excel.export.compression.CompressionManager;
 import com.adongs.session.terminal.Terminal;
 import com.adongs.utils.el.ElAnalysis;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.slf4j.Logger;
@@ -17,6 +21,7 @@ import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
@@ -49,7 +54,8 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
             .put("xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
             .put("xls","application/vnd.ms-excel")
             .put("doc","application/msword")
-            .put("docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document").build();
+            .put("docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            .build();
     /**
      * 默认响应方式
      */
@@ -59,16 +65,19 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
      */
    private final static String CHARACTER_ENCODING = "UTF-8";
 
-   private final ExcelProcessor EXCEL_PROCESSOR;
+   private final ExcelFactory excelFactory;
 
-    private final ApplicationContext APPLICATION_CONTEXT;
+    private final ApplicationContext context;
 
-    private final CompressionManager COMPRESSION_MANAGER;
+    private final CompressionManager compressionManager;
 
-    public ResponseExcelHandler(ApplicationContext applicationContext,CompressionManager compressionManager) {
-        this.APPLICATION_CONTEXT = applicationContext;
-        this.EXCEL_PROCESSOR = new ExcelProcessor(applicationContext);
-        this.COMPRESSION_MANAGER = compressionManager;
+    private final ExcelConfig config;
+
+    public ResponseExcelHandler(ApplicationContext applicationContext,ExcelConfig config,ExcelFactory excelFactory,CompressionManager compressionManager) {
+        this.context = applicationContext;
+        this.excelFactory = excelFactory;
+        this.compressionManager = compressionManager;
+        this.config = config;
     }
 
     /**
@@ -82,35 +91,112 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
         if (responseExcel==null){
             return false;
         }
+        final String path = responseExcel.path();
+        if (!StringUtils.isEmpty(path)){
+             String requestURI = Terminal.getRequest().getRequestURI();
+            requestURI = requestURI.substring(requestURI.lastIndexOf("/")+1);
+            if (!path.equals(requestURI)){
+               return false;
+            }
+        }
         boolean isVoid = methodParameter.getParameterType().getName().equals(Void.TYPE.getName());
         if (isVoid){
             return false;
         }
-        Class<?> returnType = methodParameter.getMethod().getReturnType();
-        if (StringUtils.isEmpty(responseExcel.data())){
-            boolean isResponseEntity = ResponseEntity.class.isAssignableFrom(returnType);
-            if (isResponseEntity){
-                Object returnValue = getReturnValue(methodParameter);
-                if (returnValue==null){return false;}
-                Object body = ((ResponseEntity) returnValue).getBody();
-                if (body==null){ return false; }
-                returnType = body.getClass();
-            }
-            boolean isCollection = Collection.class.isAssignableFrom(returnType);
-            return isCollection;
-        }else {
-            boolean isResponseEntity = ResponseEntity.class.isAssignableFrom(returnType);
-            Object returnValue = getReturnValue(methodParameter);
-            if (returnValue == null) {
-                return false;
-            }
-            Map<String, Object> elParam = new HashMap<String, Object>(1) {{
-                put("return", isResponseEntity ? ((ResponseEntity) returnValue).getBody() : returnValue);
-            }};
-            ElAnalysis elAnalysis = new ElAnalysis(elParam);
-            returnType = elAnalysis.type(responseExcel.data());
-            return Collection.class.isAssignableFrom(returnType);
+        return true;
+    }
+
+
+    @Override
+    public void handleReturnValue(@NonNull Object o, MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest) throws Exception {
+        HttpServletResponse response = nativeWebRequest.getNativeResponse(HttpServletResponse.class);
+        ResponseExcel responseExcel = methodParameter.getMethodAnnotation(ResponseExcel.class);
+        ExcelType excelType = StringUtils.isEmpty(responseExcel.excelType())?config.getExcelType():responseExcel.excelType().equals("HSSF")?ExcelType.HSSF:ExcelType.XSSF;
+        Object data = o instanceof ResponseEntity?((ResponseEntity) o).getBody():o;
+        Map<String,Object> elParam = new HashMap<String,Object>(1){{
+            put("return",data);
+        }};
+        ElAnalysis elAnalysis = new ElAnalysis(elParam);
+        autoAssembly(o,responseExcel,response);
+        final String[] fileName = fileName(responseExcel,excelType, elAnalysis);
+        final List<ExportView> exportViews = getData(responseExcel, excelType,data, elAnalysis);
+        final Compression compression =StringUtils.isEmpty(responseExcel.excelType())?null:compressionManager.getType(responseExcel.compression());
+        fileHeaderAuto(fileName[0],compression==null?fileName[1]:compression.compressType(),response);
+        final Workbook export = excelFactory.export(exportViews, excelType, config.getRelease());
+        ServletOutputStream outputStream = response.getOutputStream();
+        if (compression!=null){
+            compression.compress(export,String.join(".",fileName),outputStream);
+        }else{
+            export.write(outputStream);
+            export.close();
         }
+        outputStream.flush();
+        outputStream.close();
+    }
+
+    /**
+     * 获取文件名称
+     * @param excel 注解
+     * @param el el解析器
+     * @return 数组  [0]文件名称   [1]文件后缀名
+     */
+    public String [] fileName(ResponseExcel excel,ExcelType excelType,ElAnalysis el){
+        String name = excel.name().indexOf("#")==-1?excel.name():el.analysis(excel.name());
+        int datetimePosition = excel.position()==-2?config.getPosition():excel.position();
+        String format = StringUtils.isEmpty(excel.format())?config.getFormat():excel.format();
+        String suffix = excelType == ExcelType.XSSF?"xlsx":"xls";
+        if (datetimePosition==0){
+            return new String []{name,suffix};
+        }
+        DateTimeFormatter df = DateTimeFormatter.ofPattern(format);
+        String localTime = df.format(LocalDateTime.now());
+        if (datetimePosition==-1){
+            name =  localTime+name;
+        }
+        if (datetimePosition==1){
+            name =  name+localTime;
+        }
+        return new String []{name,suffix};
+    }
+
+    /**
+     * 获取数据
+     * @param responseExcel excel注解
+     * @param o 返回值
+     * @param el el表达式解析
+     * @return 数据
+     */
+    private List<ExportView> getData(ResponseExcel responseExcel,ExcelType excelType,Object o,ElAnalysis el){
+        List<ExportView> exportViews = Lists.newArrayList();
+        final Sheet[] sheets = responseExcel.sheet();
+        for (Sheet sheet : sheets) {
+            final Collection collection = StringUtils.isEmpty(sheet.data())?(Collection)o:el.analysis(sheet.data(),Collection.class);
+            final ExportParams exportParams = excelFactory.exportParams(sheet,excelType);
+            ExportView exportView = ExportView.build(exportParams,collection);
+            exportViews.add(exportView);
+        }
+        return exportViews;
+    }
+
+    /**
+     * 文件header自动填充
+     * 编码格式,文件大小,返回格式,文件名称
+     * @param fileFormat 文件格式
+     * @param fileName 文件名称
+     * @param nativeResponse 响应对象
+     */
+    private void fileHeaderAuto(String fileName,String fileFormat,HttpServletResponse nativeResponse)throws UnsupportedEncodingException{
+        fileName = fileName+"."+fileFormat;
+        HttpServletRequest request = Terminal.getRequest(HttpServletRequest.class);
+        String header = request.getHeader("User-Agent");
+        if (StringUtils.isEmpty(header)){
+            fileName = URLEncoder.encode(fileName, CHARACTER_ENCODING);
+        }
+        if (nativeResponse.getCharacterEncoding().equals("ISO-8859-1")){
+            nativeResponse.setCharacterEncoding(CHARACTER_ENCODING);
+        }
+        nativeResponse.setContentType(CONTENT_TYPE_FILE_SUFFIX.getOrDefault(fileFormat, DEFAULT_CONTENT_TYPE_FILE_SUFFIX));
+        nativeResponse.setHeader(HttpHeaders.CONTENT_DISPOSITION,"attachment;filename="+fileName);
     }
 
     /**
@@ -123,237 +209,42 @@ public class ResponseExcelHandler implements HandlerMethodReturnValueHandler{
             Field returnValue = methodParameter.getClass().getDeclaredField("returnValue");
             if (returnValue!=null){
                 returnValue.setAccessible(true);
-               return returnValue.get(methodParameter);
+                return returnValue.get(methodParameter);
             }
         } catch (NoSuchFieldException e) {
             LOGGER.error(e.getMessage(),e);
         } catch (IllegalAccessException e) {
             LOGGER.error(e.getMessage(),e);
         }
-         return null;
-    }
-
-    @Override
-    public void handleReturnValue(@NonNull Object o, MethodParameter methodParameter, ModelAndViewContainer modelAndViewContainer, NativeWebRequest nativeWebRequest) throws Exception {
-        HttpServletResponse response = nativeWebRequest.getNativeResponse(HttpServletResponse.class);
-        ResponseExcel responseExcel = methodParameter.getMethodAnnotation(ResponseExcel.class);
-        Map<String,Object> elParam = new HashMap<String,Object>(1){{
-            put("return",o instanceof ResponseEntity?((ResponseEntity) o).getBody():o);
-        }};
-        ElAnalysis elAnalysis = new ElAnalysis(elParam);
-        String fileName = getFileName(responseExcel, elAnalysis);
-        String fileSuffix = getFileSuffix(responseExcel);
-        Collection data = getData(responseExcel,o,elAnalysis);
-        String sheelName = getSheelName(responseExcel, elAnalysis);
-        String title = getTitle(responseExcel, elAnalysis);
-        ExportParams exportParams = EXCEL_PROCESSOR.exportParams(title, sheelName, responseExcel);
-        if (o instanceof ResponseEntity){
-            autoAssembly((ResponseEntity)o,responseExcel,fileSuffix,fileName,response);
-        }else{
-            autoAssembly(responseExcel,fileSuffix,fileName,response);
-        }
-        excel(responseExcel, fileName, exportParams, data, response);
-        ServletOutputStream outputStream = response.getOutputStream();
-        outputStream.flush();
-        outputStream.close();
+        return null;
     }
 
     /**
-     * 写入数据
+     * 自动装配header
      * @param responseExcel excel注解
-     * @param collection 数据
+     * @param entity 响应对象
+     * @param responseExcel 导出注解
      * @param response 响应体
-     * @return 文件大小
      */
-    private void excel(ResponseExcel responseExcel,String fileName,ExportParams exportParams, Collection<?> collection, HttpServletResponse response) throws IOException {
-        try(Workbook export = EXCEL_PROCESSOR.export(exportParams, collection);
-            ServletOutputStream outputStream = response.getOutputStream()) {
-            if (responseExcel.compression()) {
-                Compression compression = COMPRESSION_MANAGER.getType(responseExcel.compressionFormat());
-                String suffix = responseExcel.excelType() == ExcelType.XSSF ? ".xlsx" : ".xls";
-                compression.compress(export,fileName+suffix,outputStream);
-            } else {
-                export.write(outputStream);
-                outputStream.flush();
-            }
+    private void autoAssembly(Object entity,ResponseExcel responseExcel,HttpServletResponse response){
+        Set<String> headersStr = Sets.newHashSet(responseExcel.headers());
+        ResponseEntity responseEntity =null;
+        if (entity instanceof ResponseEntity){
+            responseEntity = (ResponseEntity) entity;
         }
-    }
-
-    /**
-     * 自动装配header
-     * @param responseEntity 返回对象
-     * @param fileFormat 文件格式
-     * @param fileName 文件名称
-     * @param nativeResponse 响应体
-     * @throws UnsupportedEncodingException 编码异常
-     */
-    private void autoAssembly(ResponseEntity responseEntity,ResponseExcel responseExcel,String fileFormat,String fileName,HttpServletResponse nativeResponse)throws UnsupportedEncodingException{
-        HttpHeaders headers = responseEntity.getHeaders();
-        headers.forEach((k,v)->{
-            nativeResponse.setHeader(k,String.join(",",v));
-        });
-        String[] headersStr = responseExcel.headers();
-        if (headersStr.length>0){
-            for (int i = 0,l=headersStr.length; i < l; i++) {
-                String[] split = headersStr[i].split(":");
+        headersStr.addAll(Sets.newHashSet(config.getHeaders()));
+        final HttpHeaders headers =responseEntity==null?new HttpHeaders():responseEntity.getHeaders();
+        if (!headersStr.isEmpty()){
+            for (String s : headersStr) {
+                String[] split = s.split(":");
                 if (split.length==2) {
-                    nativeResponse.setHeader(split[0],split[1]);
+                    headers.add(split[0],split[1]);
                 }
             }
         }
-        nativeResponse.setStatus(responseEntity.getStatusCodeValue());
-        fileHeaderAuto(fileFormat,fileName,nativeResponse);
-    }
-
-    /**
-     * 自动装配header
-     * @param responseExcel excel注解
-     * @param fileFormat 文件格式
-     * @param fileName 文件名称
-     * @param nativeResponse 响应体
-     * @throws UnsupportedEncodingException 编码异常
-     */
-    private void autoAssembly(ResponseExcel responseExcel,String fileFormat,String fileName,HttpServletResponse nativeResponse) throws UnsupportedEncodingException {
-        for (String header : responseExcel.headers()) {
-            String[] split = header.split(":");
-            if (split.length==2) {
-                nativeResponse.setHeader(split[0],split[1]);
-            }
+        headers.forEach((k,v)->response.setHeader(k,String.join(",",v)));
+        if (responseEntity!=null){
+            response.setStatus(responseEntity.getStatusCodeValue());
         }
-        fileHeaderAuto(fileFormat,fileName,nativeResponse);
-    }
-
-    /**
-     * 获取表格标题
-     * @param responseExcel excel注解
-     * @param elAnalysis el解析器
-     * @return 标题
-     */
-    private String getTitle(ResponseExcel responseExcel,ElAnalysis elAnalysis){
-        String title = responseExcel.title();
-        if (StringUtils.isEmpty(title)){
-            return null;
-        }
-        if (title.indexOf("#")!=-1){
-          return elAnalysis.analysis(title);
-        }
-        return title;
-    }
-
-    /**
-     * 获取数据
-     * @param responseExcel excel注解
-     * @param o 返回值
-     * @param elAnalysis el表达式解析
-     * @return 数据
-     */
-    private Collection getData(ResponseExcel responseExcel,Object o,ElAnalysis elAnalysis){
-        if (StringUtils.isEmpty(responseExcel.data())){
-            if (o instanceof ResponseEntity){
-                ResponseEntity responseEntity = (ResponseEntity)o;
-                Object body = responseEntity.getBody();
-                if (body instanceof Collection){
-                    return (Collection)body;
-                }else{
-                    throw new ClassCastException("return data type "+o.getClass().getName()+" Expectation type Collection");
-                }
-            }else if(o instanceof Collection){
-                return (Collection)o;
-            }
-        }else{
-           return elAnalysis.analysis(responseExcel.data(), Collection.class);
-        }
-         throw new NullPointerException("Can't get data");
-    }
-
-    /**
-     * 文件header自动填充
-     * 编码格式,文件大小,返回格式,文件名称
-     * @param fileFormat 文件格式
-     * @param fileName 文件名称
-     * @param nativeResponse 响应对象
-     */
-    private void fileHeaderAuto(String fileFormat,String fileName,HttpServletResponse nativeResponse)throws UnsupportedEncodingException{
-          fileName = fileName+"."+fileFormat;
-       if (isBrowser()){
-           fileName = URLEncoder.encode(fileName, CHARACTER_ENCODING);
-       }
-       if (nativeResponse.getCharacterEncoding().equals("ISO-8859-1")){
-           nativeResponse.setCharacterEncoding(CHARACTER_ENCODING);
-       }
-       nativeResponse.setContentType(CONTENT_TYPE_FILE_SUFFIX.getOrDefault(fileFormat, DEFAULT_CONTENT_TYPE_FILE_SUFFIX));
-       nativeResponse.setHeader(HttpHeaders.CONTENT_DISPOSITION,"attachment;filename="+fileName);
-   }
-
-    /**
-     * 判断是否为浏览器
-     * 主要用来区分postman和浏览器
-     * @return ture浏览器  false非浏览器
-     */
-    private boolean isBrowser(){
-        HttpServletRequest request = Terminal.getRequest(HttpServletRequest.class);
-        String header = request.getHeader("User-Agent");
-        if (StringUtils.isEmpty(header)){
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * 获取文件后缀
-     * @param responseExcel 导出excel注解
-     * @return 后缀类型
-     */
-    private String getFileSuffix(ResponseExcel responseExcel){
-        if (responseExcel.compression()){
-           return responseExcel.compressionFormat();
-        }
-        if(responseExcel.excelType()== ExcelType.XSSF){
-            return "xlsx";
-        }
-       return "xls";
-    }
-
-    /**
-     * 获取文件名称
-     * @param responseExcel excel注解
-     * @param elAnalysis el表达式解析器
-     * @return 文件名称
-     */
-    private String getFileName(ResponseExcel responseExcel, ElAnalysis elAnalysis){
-        String name = responseExcel.name();
-        int datetimePosition = responseExcel.nameDatetimePosition();
-        int isel = name.indexOf("#");
-        if (isel!=-1){
-            name = elAnalysis.analysis(name);
-        }
-        if (datetimePosition==0){
-            return name;
-        }
-        DateTimeFormatter df = DateTimeFormatter.ofPattern(responseExcel.nameDatetime());
-        LocalDateTime time = LocalDateTime.now();
-        String localTime = df.format(time);
-        if (datetimePosition==-1){
-             name =  localTime+name;
-        }
-        if (datetimePosition==1){
-            name =  name+localTime;
-        }
-        return name;
-    }
-
-    /**
-     * 获取sheel名称
-     * @param responseExcel excel注解
-     * @param elAnalysis  el表达式解析器
-     * @return shell名称
-     */
-    private String getSheelName(ResponseExcel responseExcel,ElAnalysis elAnalysis){
-        String sheelName= responseExcel.sheetName();
-        int isel = sheelName.indexOf("#");
-        if (isel!=-1){
-            sheelName = elAnalysis.analysis(sheelName);
-        }
-        return sheelName;
     }
 }

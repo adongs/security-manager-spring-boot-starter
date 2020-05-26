@@ -13,8 +13,16 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.captcha")
-public class CaptchaConfig {
+public class CaptchaGlobalConfig {
 
+    /**
+     * 请求图片验证码的id
+     */
+    private String requestId = "id";
+    /**
+     * 缓存时间单位(毫秒)默认缓存5分钟
+     */
+    private long cacheTime = 1000*60*5;
     /**
      * 图片验证码路径
      */
@@ -61,21 +69,24 @@ public class CaptchaConfig {
     /**
      * 判定条件
      */
-    private FailureCondition [] condition = new  FailureCondition [] {FailureCondition.HTTP_STATUS_NOT_200,FailureCondition.THROW_EXCEPTION};
+    private FailureCondition [] condition = new  FailureCondition [] {FailureCondition.THROW_EXCEPTION};
+
 
     /**
-     * 默认处理器
+     * 标记次数,当请求接口失败后多少次要求给出验证码
      */
-    private String processor = "default";
+    private int threshold = 3;
 
+    /**
+     * 标记缓存时间,默认为2小时
+     */
+    private long markerCacheTime = 1000*60*60*2;
 
-    public String getProcessor() {
-        return processor;
-    }
-
-    public void setProcessor(String processor) {
-        this.processor = processor;
-    }
+    /**
+     * 异常判定
+     */
+    private Class<? extends Throwable>[] abnormalJudgment = new Class [] {RuntimeException.class};
+    
 
     public String getUrl() {
         return url;
@@ -143,9 +154,50 @@ public class CaptchaConfig {
 
     public int getFont() {
         return font;
+
     }
 
     public void setFont(int font) {
         this.font = font;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
+    public long getCacheTime() {
+        return cacheTime;
+    }
+
+    public void setCacheTime(long cacheTime) {
+        this.cacheTime = cacheTime;
+    }
+
+    public int getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(int threshold) {
+        this.threshold = threshold;
+    }
+
+    public long getMarkerCacheTime() {
+        return markerCacheTime;
+    }
+
+    public void setMarkerCacheTime(long markerCacheTime) {
+        this.markerCacheTime = markerCacheTime;
+    }
+
+    public Class<? extends Throwable>[] getAbnormalJudgment() {
+        return abnormalJudgment;
+    }
+
+    public void setAbnormalJudgment(Class<? extends Throwable>[] abnormalJudgment) {
+        this.abnormalJudgment = abnormalJudgment;
     }
 }

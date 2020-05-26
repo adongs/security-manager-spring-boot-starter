@@ -12,12 +12,14 @@ import java.util.Collection;
  */
 public interface ExcelProcessor {
 
+
+  public String name();
     /**
      * 保存文件
      * @param path 文件路径
-     * @param collection 上传的文件
+     * @param file 上传的文件
      */
-  public void saveFile(String path, Collection<MultipartFile> collection);
+  public void saveFile(String path,MultipartFile file);
 
     /**
      * 校验失败后

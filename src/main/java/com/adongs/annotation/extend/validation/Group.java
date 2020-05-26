@@ -23,8 +23,8 @@ public @interface Group {
     String [] values();
 
     /**
-     * 枚举类支付
-     * @return
+     * 枚举类
+     * @return 枚举
      */
     Class<? extends Enum> group() default Enum.class;
     /**

@@ -20,28 +20,30 @@ import java.util.Iterator;
 @Component
 public class DefaultFileProcessor implements ExcelProcessor {
 
+    @Override
+    public String name() {
+        return "default";
+    }
+
     /**
      * 保存文件,本方法为同步方法
      * 如果文件存在指定目录,将进行覆盖
      * 请尽量采用异步方式实现
      * @param path 文件路径
-     * @param collection 上传的文件
+     * @param multipartFile 上传的文件
      */
     @Override
-    public void saveFile(String path, Collection<MultipartFile> collection){
+    public void saveFile(String path, MultipartFile multipartFile){
          if (!StringUtils.isEmpty(path)){
-             for (Iterator<MultipartFile> iterator = collection.iterator();iterator.hasNext();){
-                 MultipartFile multipartFile = iterator.next();
-                 path=path.lastIndexOf("/")==path.length()-1?path:path+"/";
-                 File file = new File(path+multipartFile.getOriginalFilename());
-                 if (!file.getParentFile().exists()) {
-                     file.getParentFile().mkdirs();
-                 }
-                try {
-                    multipartFile.transferTo(file);
-                }catch (IOException e){
-                    e.printStackTrace();
-                }
+             path=path.lastIndexOf("/")==path.length()-1?path:path+"/";
+             File file = new File(path+multipartFile.getOriginalFilename());
+             if (!file.getParentFile().exists()) {
+                 file.getParentFile().mkdirs();
+             }
+             try {
+                 multipartFile.transferTo(file);
+             }catch (IOException e){
+                 e.printStackTrace();
              }
          }
     }

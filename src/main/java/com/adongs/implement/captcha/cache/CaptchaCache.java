@@ -1,4 +1,4 @@
-package com.adongs.implement.captcha;
+package com.adongs.implement.captcha.cache;
 
 /**
  * 验证码缓存
@@ -19,7 +19,26 @@ public interface CaptchaCache {
      * 验证二维码
      * @param id 唯一id
      * @param verCode 验证码
-     * @return
+     * @return ture 验证成功 false 验证失败
      */
     public boolean ver(String id,String verCode);
+
+    /**
+     * 添加标记
+     * @param id id
+     */
+    public void addMarkerCount(String id);
+
+    /**
+     * 获取标记次数
+     * @param id id
+     * @return 获取标记次数
+     */
+    public int markerCount(String id);
+
+    /**
+     * 清除标记
+     * @param id id
+     */
+    public void clearMark(String id);
 }

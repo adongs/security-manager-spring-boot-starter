@@ -1,5 +1,12 @@
 package com.adongs.constant;
 
+import com.adongs.implement.captcha.marker.Marker;
+import com.adongs.session.terminal.Terminal;
+import com.adongs.utils.el.ElAnalysis;
+import org.apache.poi.ss.formula.functions.T;
+
+import java.util.Map;
+
 /**
  * 接口访问失败条件
  * @author yudong
@@ -7,23 +14,43 @@ package com.adongs.constant;
  */
 public enum FailureCondition {
     /**
-     * 当响应返回不是200
-     */
-    HTTP_STATUS_NOT_200,
-    /**
      * 方法抛出异常
      */
-    THROW_EXCEPTION,
+    THROW_EXCEPTION{
+        @Override
+        public void mark(Marker marker, String id, Throwable param, Class<? extends Throwable>... throwables) {
+            for (Class<? extends Throwable> throwable : throwables) {
+                if (throwable.isAssignableFrom(param.getClass())){
+                    marker.marker(id, Terminal.getRequest());
+                }
+            }
+        }
+
+        @Override
+        public void mark(Marker marker, String id, Map<String,Object> param, String el) {
+        }
+    },
     /**
      * 表达式判定
      */
-    EXPRESSION_DECISION,
-    /**
-     * 自定义判定
-     */
-    CUSTOM_JUDGMENT,
-    /**
-     * 使用配置文件
-     */
-    CONFIG;
+    EXPRESSION_DECISION{
+        @Override
+        public void mark(Marker marker, String id, Throwable param, Class<? extends Throwable>... throwables) {
+
+        }
+
+        @Override
+        public void mark(Marker marker, String id, Map<String,Object> param, String el) {
+            ElAnalysis elAnalysis = new ElAnalysis(param);
+            final Boolean analysis = elAnalysis.analysis(el, Boolean.class);
+            if (analysis){
+                marker.marker(id, Terminal.getRequest());
+            }
+        }
+    };
+
+    public abstract void mark(Marker marker,String id,Throwable param,Class<?extends Throwable> ... throwables);
+    public abstract void mark(Marker marker,String id,Map<String,Object> param,String el);
+
+
 }
